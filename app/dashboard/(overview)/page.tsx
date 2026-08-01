@@ -5,7 +5,6 @@ import {
 } from "@/app/ui/skeletons";
 import CardWrapper from "@/app/ui/dashboard/cards";
 import { Metadata } from "next";
-import Link from "next/dist/client/link";
 
 export const metadata: Metadata = {
   title: "Dashboard",

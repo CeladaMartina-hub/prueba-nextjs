@@ -104,34 +104,34 @@ export async function updateProduct(
   formData: FormData,
 ) {
   const validatedFields = ProductSchema.safeParse({
-    name: formData.get('name'),
-    description: formData.get('description'),
-    price: formData.get('price'),
-    category_id: formData.get('category_id'),
-    stock: formData.get('stock'),
+    name: formData.get("name"),
+    description: formData.get("description"),
+    price: formData.get("price"),
+    category_id: formData.get("category_id"),
+    stock: formData.get("stock"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Faltan campos. No se pudo actualizar el producto.',
+      message: "Faltan campos. No se pudo actualizar el producto.",
     };
   }
 
   const { name, description, price, category_id, stock } = validatedFields.data;
 
   let imageUrl = currentImageUrl;
-  const imageFile = formData.get('image') as File;
+  const imageFile = formData.get("image") as File;
 
   if (imageFile && imageFile.size > 0) {
     try {
       const blob = await put(imageFile.name, imageFile, {
-        access: 'public',
+        access: "public",
         addRandomSuffix: true,
       });
       imageUrl = blob.url;
     } catch (error) {
-      return { message: 'Error al subir la imagen.' };
+      return { message: "Error al subir la imagen." };
     }
   }
 
@@ -143,29 +143,29 @@ export async function updateProduct(
       WHERE id = ${id}
     `;
   } catch (error) {
-    return { message: 'Database Error: No se pudo actualizar el producto.' };
+    return { message: "Database Error: No se pudo actualizar el producto." };
   }
 
-  revalidatePath('/dashboard/products');
-  redirect('/dashboard/products');
+  revalidatePath("/dashboard/products");
+  redirect("/dashboard/products");
 }
 
 export async function deleteProduct(id: string) {
   try {
     await sql`DELETE FROM products WHERE id = ${id}`;
-    revalidatePath('/dashboard/products');
+    revalidatePath("/dashboard/products");
   } catch (error) {
     console.error(error);
-    throw new Error('Database Error: No se pudo eliminar el producto.');
+    throw new Error("Database Error: No se pudo eliminar el producto.");
   }
 }
 
 //clientes
 const CustomerSchema = z.object({
-  first_name: z.string().min(1, 'El nombre es obligatorio.'),
-  last_name: z.string().min(1, 'El apellido es obligatorio.'),
+  first_name: z.string().min(1, "El nombre es obligatorio."),
+  last_name: z.string().min(1, "El apellido es obligatorio."),
   dni: z.string().optional(),
-  email: z.string().email('Email inválido.').optional().or(z.literal('')),
+  email: z.string().email("Email inválido.").optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -186,27 +186,38 @@ export type CustomerState = {
   message?: string | null;
 };
 
-export async function createCustomer(prevState: CustomerState, formData: FormData) {
+export async function createCustomer(
+  prevState: CustomerState,
+  formData: FormData,
+) {
   const validatedFields = CustomerSchema.safeParse({
-    first_name: formData.get('first_name'),
-    last_name: formData.get('last_name'),
-    dni: formData.get('dni'),
-    email: formData.get('email'),
-    phone: formData.get('phone'),
-    address: formData.get('address'),
-    city: formData.get('city'),
-    postal_code: formData.get('postal_code'),
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
+    dni: formData.get("dni"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    city: formData.get("city"),
+    postal_code: formData.get("postal_code"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Faltan campos. No se pudo crear el cliente.',
+      message: "Faltan campos. No se pudo crear el cliente.",
     };
   }
 
-  const { first_name, last_name, dni, email, phone, address, city, postal_code } =
-    validatedFields.data;
+  const {
+    first_name,
+    last_name,
+    dni,
+    email,
+    phone,
+    address,
+    city,
+    postal_code,
+  } = validatedFields.data;
 
   try {
     await sql`
@@ -217,12 +228,12 @@ export async function createCustomer(prevState: CustomerState, formData: FormDat
       )
     `;
   } catch (error) {
-    console.error('Error creando cliente:', error);
-    return { message: 'Database Error: No se pudo crear el cliente.' };
+    console.error("Error creando cliente:", error);
+    return { message: "Database Error: No se pudo crear el cliente." };
   }
 
-  revalidatePath('/dashboard/customers');
-  redirect('/dashboard/customers');
+  revalidatePath("/dashboard/customers");
+  redirect("/dashboard/customers");
 }
 
 export async function updateCustomer(
@@ -231,25 +242,33 @@ export async function updateCustomer(
   formData: FormData,
 ) {
   const validatedFields = CustomerSchema.safeParse({
-    first_name: formData.get('first_name'),
-    last_name: formData.get('last_name'),
-    dni: formData.get('dni'),
-    email: formData.get('email'),
-    phone: formData.get('phone'),
-    address: formData.get('address'),
-    city: formData.get('city'),
-    postal_code: formData.get('postal_code'),
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
+    dni: formData.get("dni"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    city: formData.get("city"),
+    postal_code: formData.get("postal_code"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Faltan campos. No se pudo actualizar el cliente.',
+      message: "Faltan campos. No se pudo actualizar el cliente.",
     };
   }
 
-  const { first_name, last_name, dni, email, phone, address, city, postal_code } =
-    validatedFields.data;
+  const {
+    first_name,
+    last_name,
+    dni,
+    email,
+    phone,
+    address,
+    city,
+    postal_code,
+  } = validatedFields.data;
 
   try {
     await sql`
@@ -260,26 +279,26 @@ export async function updateCustomer(
       WHERE id = ${id}
     `;
   } catch (error) {
-    return { message: 'Database Error: No se pudo actualizar el cliente.' };
+    return { message: "Database Error: No se pudo actualizar el cliente." };
   }
 
-  revalidatePath('/dashboard/customers');
-  redirect('/dashboard/customers');
+  revalidatePath("/dashboard/customers");
+  redirect("/dashboard/customers");
 }
 
 export async function deleteCustomer(id: string) {
   try {
     await sql`DELETE FROM customers WHERE id = ${id}`;
-    revalidatePath('/dashboard/customers');
+    revalidatePath("/dashboard/customers");
   } catch (error) {
     console.error(error);
-    throw new Error('Database Error: No se pudo eliminar el cliente.');
+    throw new Error("Database Error: No se pudo eliminar el cliente.");
   }
 }
 
 //categorias
 const CategorySchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio.'),
+  name: z.string().min(1, "El nombre es obligatorio."),
 });
 
 export type CategoryState = {
@@ -289,15 +308,18 @@ export type CategoryState = {
   message?: string | null;
 };
 
-export async function createCategory(prevState: CategoryState, formData: FormData) {
+export async function createCategory(
+  prevState: CategoryState,
+  formData: FormData,
+) {
   const validatedFields = CategorySchema.safeParse({
-    name: formData.get('name'),
+    name: formData.get("name"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Faltan campos. No se pudo crear la categoría.',
+      message: "Faltan campos. No se pudo crear la categoría.",
     };
   }
 
@@ -306,11 +328,14 @@ export async function createCategory(prevState: CategoryState, formData: FormDat
   try {
     await sql`INSERT INTO categories (name) VALUES (${name})`;
   } catch (error) {
-    return { message: 'Database Error: No se pudo crear la categoría (¿ya existe ese nombre?).' };
+    return {
+      message:
+        "Database Error: No se pudo crear la categoría (¿ya existe ese nombre?).",
+    };
   }
 
-  revalidatePath('/dashboard/categories');
-  redirect('/dashboard/categories');
+  revalidatePath("/dashboard/categories");
+  redirect("/dashboard/categories");
 }
 
 export async function updateCategory(
@@ -319,13 +344,13 @@ export async function updateCategory(
   formData: FormData,
 ) {
   const validatedFields = CategorySchema.safeParse({
-    name: formData.get('name'),
+    name: formData.get("name"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Faltan campos. No se pudo actualizar la categoría.',
+      message: "Faltan campos. No se pudo actualizar la categoría.",
     };
   }
 
@@ -334,19 +359,120 @@ export async function updateCategory(
   try {
     await sql`UPDATE categories SET name = ${name} WHERE id = ${id}`;
   } catch (error) {
-    return { message: 'Database Error: No se pudo actualizar la categoría.' };
+    return { message: "Database Error: No se pudo actualizar la categoría." };
   }
 
-  revalidatePath('/dashboard/categories');
-  redirect('/dashboard/categories');
+  revalidatePath("/dashboard/categories");
+  redirect("/dashboard/categories");
 }
 
 export async function deleteCategory(id: string) {
   try {
     await sql`DELETE FROM categories WHERE id = ${id}`;
-    revalidatePath('/dashboard/categories');
+    revalidatePath("/dashboard/categories");
   } catch (error) {
     console.error(error);
-    throw new Error('Database Error: No se pudo eliminar la categoría (puede tener productos asociados).');
+    throw new Error(
+      "Database Error: No se pudo eliminar la categoría (puede tener productos asociados).",
+    );
   }
+}
+
+//ventas
+
+const SaleItemSchema = z.object({
+  product_id: z.string().min(1),
+  product_name: z.string().min(1),
+  quantity: z.coerce.number().int().gt(0),
+  unit_price: z.coerce.number().gt(0),
+});
+
+const SaleSchema = z.object({
+  customer_type: z.enum(["registered", "counter"]),
+  customer_id: z.string().optional(),
+  customer_name: z.string().optional(),
+  items: z.array(SaleItemSchema).min(1, "Agregá al menos un producto."),
+});
+
+export type SaleState = {
+  message?: string | null;
+};
+
+export async function createSale(prevState: SaleState, formData: FormData) {
+  const customer_type = formData.get("customer_type") as string;
+  const customer_id = formData.get("customer_id") as string;
+  const customer_name = formData.get("customer_name") as string;
+  const itemsRaw = formData.get("items") as string;
+
+  let items;
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch {
+    return { message: "Error al leer los productos de la venta." };
+  }
+
+  const validatedFields = SaleSchema.safeParse({
+    customer_type,
+    customer_id: customer_id || undefined,
+    customer_name: customer_name || undefined,
+    items,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: "Faltan datos. Revisá el cliente y los productos agregados.",
+    };
+  }
+
+  const data = validatedFields.data;
+  const finalCustomerId =
+    data.customer_type === "registered" ? (data.customer_id ?? null) : null;
+  const finalCustomerName =
+    data.customer_type === "counter" ? data.customer_name || null : null;
+  const total = data.items.reduce(
+    (sum, item) => sum + item.quantity * item.unit_price,
+    0,
+  );
+
+  try {
+    // Verificamos stock disponible antes de confirmar
+    for (const item of data.items) {
+      const stockCheck = await sql`
+        SELECT stock FROM products WHERE id = ${item.product_id}
+      `;
+      const currentStock = stockCheck[0]?.stock ?? 0;
+      if (currentStock < item.quantity) {
+        return {
+          message: `Stock insuficiente para "${item.product_name}" (disponible: ${currentStock}).`,
+        };
+      }
+    }
+
+    // Transacción: crea venta, items, y descuenta stock, todo o nada
+    await sql.begin(async (sql) => {
+      const [sale] = await sql`
+        INSERT INTO sales (customer_id, customer_name, total)
+        VALUES (${finalCustomerId ?? null}, ${finalCustomerName ?? null}, ${total})
+        RETURNING id
+      `;
+
+      for (const item of data.items) {
+        await sql`
+          INSERT INTO sale_items (sale_id, product_id, product_name, quantity, unit_price)
+          VALUES (${sale.id}, ${item.product_id}, ${item.product_name}, ${item.quantity}, ${item.unit_price})
+        `;
+
+        await sql`
+          UPDATE products SET stock = stock - ${item.quantity} WHERE id = ${item.product_id}
+        `;
+      }
+    });
+  } catch (error) {
+    console.error("Error creando venta:", error);
+    return { message: "Database Error: No se pudo registrar la venta." };
+  }
+
+  revalidatePath("/dashboard/sales");
+  revalidatePath("/dashboard/products");
+  redirect("/dashboard/sales");
 }

@@ -71,3 +71,30 @@ export type Customer = {
   city: string | null;
   postal_code: string | null;
 };
+
+export type Sale = {
+  id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  sale_date: string;
+  total: number;
+};
+
+export type SaleItem = {
+  id: string;
+  sale_id: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+};
+
+export type SaleWithItems = Sale & {
+  customer_full_name: string | null;
+  items: {
+    product_id: string;
+    product_name: string;
+    quantity: number;
+    unit_price: number;
+  }[];
+};
