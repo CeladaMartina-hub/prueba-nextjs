@@ -58,6 +58,7 @@ export type ProductState = {
 export type Category = {
   id: string;
   name: string;
+  image_url: string | null;
 };
 
 export type Customer = {

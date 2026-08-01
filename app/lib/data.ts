@@ -265,3 +265,16 @@ export async function fetchDailyRevenue() {
     throw new Error('Failed to fetch daily revenue.');
   }
 }
+
+//home
+export async function fetchCategoriesWithImage() {
+  try {
+    const categories = await sql<Category[]>`
+      SELECT id, name, image_url FROM categories ORDER BY name ASC
+    `;
+    return categories;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch categories.');
+  }
+}

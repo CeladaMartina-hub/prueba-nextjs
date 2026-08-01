@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useActionState } from 'react';
-import Link from 'next/link';
-import { Category } from '@/app/lib/definitions';
-import { CategoryState } from '@/app/lib/actions';
+import { useActionState } from "react";
+import Link from "next/link";
+import { Category } from "@/app/lib/definitions";
+import { CategoryState } from "@/app/lib/actions";
 
 export default function CategoryForm({
   category,
   action,
 }: {
   category?: Category;
-  action: (prevState: CategoryState, formData: FormData) => Promise<CategoryState>;
+  action: (
+    prevState: CategoryState,
+    formData: FormData,
+  ) => Promise<CategoryState>;
 }) {
   const initialState: CategoryState = { message: null, errors: {} };
   const [state, formAction] = useActionState(action, initialState);
@@ -19,7 +22,9 @@ export default function CategoryForm({
     <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         <div className="mb-4">
-          <label htmlFor="name" className="mb-2 block text-sm font-medium">Nombre</label>
+          <label htmlFor="name" className="mb-2 block text-sm font-medium">
+            Nombre
+          </label>
           <input
             id="name"
             name="name"
@@ -31,8 +36,21 @@ export default function CategoryForm({
             <p className="mt-1 text-sm text-red-500">{state.errors.name[0]}</p>
           )}
         </div>
-
-        {state.message && <p className="mt-2 text-sm text-red-500">{state.message}</p>}
+        <div className="mb-4">
+          <label htmlFor="image" className="mb-2 block text-sm font-medium">
+            Foto de la categoría (opcional)
+          </label>
+          <input
+            id="image"
+            name="image"
+            type="file"
+            accept="image/*"
+            className="block w-full text-sm"
+          />
+        </div>
+        {state.message && (
+          <p className="mt-2 text-sm text-red-500">{state.message}</p>
+        )}
       </div>
 
       <div className="mt-6 flex justify-end gap-4">

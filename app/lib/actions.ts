@@ -325,8 +325,22 @@ export async function createCategory(
 
   const { name } = validatedFields.data;
 
+  let imageUrl: string | null = null;
+  const imageFile = formData.get("image") as File;
+  if (imageFile && imageFile.size > 0) {
+    try {
+      const blob = await put(imageFile.name, imageFile, {
+        access: "public",
+        addRandomSuffix: true,
+      });
+      imageUrl = blob.url;
+    } catch (error) {
+      return { message: "Error al subir la imagen." };
+    }
+  }
+
   try {
-    await sql`INSERT INTO categories (name) VALUES (${name})`;
+    await sql`INSERT INTO categories (name, image_url) VALUES (${name}, ${imageUrl})`;
   } catch (error) {
     return {
       message:
@@ -356,8 +370,22 @@ export async function updateCategory(
 
   const { name } = validatedFields.data;
 
+  let imageUrl: string | null = null;
+  const imageFile = formData.get("image") as File;
+  if (imageFile && imageFile.size > 0) {
+    try {
+      const blob = await put(imageFile.name, imageFile, {
+        access: "public",
+        addRandomSuffix: true,
+      });
+      imageUrl = blob.url;
+    } catch (error) {
+      return { message: "Error al subir la imagen." };
+    }
+  }
+
   try {
-    await sql`UPDATE categories SET name = ${name} WHERE id = ${id}`;
+    await sql`UPDATE categories SET name = ${name}, image_url = ${imageUrl} WHERE id = ${id}`;
   } catch (error) {
     return { message: "Database Error: No se pudo actualizar la categoría." };
   }
