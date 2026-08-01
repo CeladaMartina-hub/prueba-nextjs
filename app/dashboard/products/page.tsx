@@ -1,8 +1,7 @@
-import { fetchProducts } from '@/app/lib/data';
-import Link from 'next/link';
-import { PlusIcon } from '@heroicons/react/24/outline';
-import ProductsTable from '@/app/ui/products/table';
-
+import { fetchProducts } from "@/app/lib/data";
+import Link from "next/link";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import ProductsTable from "@/app/ui/products/table";
 
 export default async function Page() {
   const products = await fetchProducts();
@@ -21,7 +20,7 @@ export default async function Page() {
           <PlusIcon className="h-5" />
         </Link>
       </div>
-      <ProductsTable products={products} />
+      <ProductsTable products={products} />      
     </div>
   );
 }
