@@ -4,8 +4,10 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import postgres from "postgres";
 import { redirect } from "next/navigation";
-import { signIn } from '@/auth';
-import { AuthError } from 'next-auth';
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
+import { put } from "@vercel/blob";
+import { ProductState } from "./definitions";
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
@@ -14,14 +16,14 @@ export async function authenticate(
   formData: FormData,
 ) {
   try {
-    await signIn('credentials', formData);
+    await signIn("credentials", formData);
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
-        case 'CredentialsSignin':
-          return 'Invalid credentials.';
+        case "CredentialsSignin":
+          return "Invalid credentials.";
         default:
-          return 'Something went wrong.';
+          return "Something went wrong.";
       }
     }
     throw error;
@@ -140,4 +142,71 @@ export async function deleteInvoice(id: string) {
   }
 
   revalidatePath("/dashboard/invoices");
+}
+
+//productos
+const ProductSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio."),
+  description: z.string().optional(),
+  price: z.coerce.number().gt(0, "El precio debe ser mayor a 0."),
+  category_id: z.string().min(1, "Elegí una categoría."),
+  stock: z.coerce.number().int().min(0),
+});
+
+export async function createProduct(
+  prevState: ProductState,
+  formData: FormData,
+) {
+  console.log("name:", formData.get("name"));
+  console.log("price:", formData.get("price"));
+  console.log("category_id:", formData.get("category_id"));
+  console.log("image:", formData.get("image"));
+
+  const validatedFields = ProductSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+    price: formData.get("price"),
+    category_id: formData.get("category_id"),
+    stock: formData.get("stock"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Faltan campos. No se pudo crear el producto.",
+    };
+  }
+
+  const { name, description, price, category_id, stock } = validatedFields.data;
+
+  const imageFile = formData.get("image") as File;
+  if (!imageFile || imageFile.size === 0) {
+    return { message: "La imagen es obligatoria." };
+  }
+
+  let imageUrl: string;
+  try {
+    const blob = await put(imageFile.name, imageFile, {
+      access: "public",
+      addRandomSuffix: true,
+    });
+    imageUrl = blob.url;
+  } catch (error) {
+    console.error("Error subiendo a Blob:", error);
+    return { message: "Error al subir la imagen." };
+  }
+
+  console.log("Imagen subida OK:", imageUrl);
+
+  try {
+    await sql`
+      INSERT INTO products (name, description, price, image_url, category_id, stock)
+      VALUES (${name}, ${description ?? null}, ${price}, ${imageUrl}, ${category_id}, ${stock})
+    `;
+  } catch (error) {
+    return { message: "Database Error: No se pudo crear el producto." };
+  }
+
+  revalidatePath("/dashboard/products");
+  redirect("/dashboard/products");
 }

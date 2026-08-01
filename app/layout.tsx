@@ -1,6 +1,8 @@
 import '@/app/ui/global.css';
 import { inter } from '@/app/ui/fonts';
 import { Metadata } from 'next';
+import Header from './ui/header';
+import Footer from './ui/Footer';
 
 //%s reemplace el título de la página, si no hay título, se mostrará el valor por defecto
 export const metadata: Metadata = {
@@ -19,7 +21,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <Header />
+        {children}
+        <Footer />
+        </body>
     </html>
   );
 }
