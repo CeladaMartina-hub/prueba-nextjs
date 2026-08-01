@@ -9,13 +9,6 @@ export type User = {
   password: string;
 };
 
-export type Customer = {
-  id: string;
-  name: string;
-  email: string;
-  image_url: string;
-};
-
 export type Invoice = {
   id: string;
   customer_id: string;
@@ -111,4 +104,16 @@ export type ProductState = {
 export type Category = {
   id: string;
   name: string;
+};
+
+export type Customer = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  dni: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
 };

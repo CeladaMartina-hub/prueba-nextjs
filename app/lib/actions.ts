@@ -210,3 +210,120 @@ export async function createProduct(
   revalidatePath("/dashboard/products");
   redirect("/dashboard/products");
 }
+
+//clientes
+const CustomerSchema = z.object({
+  first_name: z.string().min(1, 'El nombre es obligatorio.'),
+  last_name: z.string().min(1, 'El apellido es obligatorio.'),
+  dni: z.string().optional(),
+  email: z.string().email('Email inválido.').optional().or(z.literal('')),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postal_code: z.string().optional(),
+});
+
+export type CustomerState = {
+  errors?: {
+    first_name?: string[];
+    last_name?: string[];
+    dni?: string[];
+    email?: string[];
+    phone?: string[];
+    address?: string[];
+    city?: string[];
+    postal_code?: string[];
+  };
+  message?: string | null;
+};
+
+export async function createCustomer(prevState: CustomerState, formData: FormData) {
+  const validatedFields = CustomerSchema.safeParse({
+    first_name: formData.get('first_name'),
+    last_name: formData.get('last_name'),
+    dni: formData.get('dni'),
+    email: formData.get('email'),
+    phone: formData.get('phone'),
+    address: formData.get('address'),
+    city: formData.get('city'),
+    postal_code: formData.get('postal_code'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Faltan campos. No se pudo crear el cliente.',
+    };
+  }
+
+  const { first_name, last_name, dni, email, phone, address, city, postal_code } =
+    validatedFields.data;
+
+  try {
+    await sql`
+      INSERT INTO customers (first_name, last_name, dni, email, phone, address, city, postal_code)
+      VALUES (
+        ${first_name}, ${last_name}, ${dni || null}, ${email || null},
+        ${phone || null}, ${address || null}, ${city || null}, ${postal_code || null}
+      )
+    `;
+  } catch (error) {
+    console.error('Error creando cliente:', error);
+    return { message: 'Database Error: No se pudo crear el cliente.' };
+  }
+
+  revalidatePath('/dashboard/customers');
+  redirect('/dashboard/customers');
+}
+
+export async function updateCustomer(
+  id: string,
+  prevState: CustomerState,
+  formData: FormData,
+) {
+  const validatedFields = CustomerSchema.safeParse({
+    first_name: formData.get('first_name'),
+    last_name: formData.get('last_name'),
+    dni: formData.get('dni'),
+    email: formData.get('email'),
+    phone: formData.get('phone'),
+    address: formData.get('address'),
+    city: formData.get('city'),
+    postal_code: formData.get('postal_code'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Faltan campos. No se pudo actualizar el cliente.',
+    };
+  }
+
+  const { first_name, last_name, dni, email, phone, address, city, postal_code } =
+    validatedFields.data;
+
+  try {
+    await sql`
+      UPDATE customers
+      SET first_name = ${first_name}, last_name = ${last_name}, dni = ${dni || null},
+          email = ${email || null}, phone = ${phone || null}, address = ${address || null},
+          city = ${city || null}, postal_code = ${postal_code || null}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    return { message: 'Database Error: No se pudo actualizar el cliente.' };
+  }
+
+  revalidatePath('/dashboard/customers');
+  redirect('/dashboard/customers');
+}
+
+export async function deleteCustomer(id: string) {
+  try {
+    await sql`DELETE FROM customers WHERE id = ${id}`;
+    revalidatePath('/dashboard/customers');
+  } catch (error) {
+    console.error(error);
+    throw new Error('Database Error: No se pudo eliminar el cliente.');
+  }
+}
