@@ -1,17 +1,18 @@
-import '@/app/ui/global.css';
-import { inter } from '@/app/ui/fonts';
-import { Metadata } from 'next';
-import Header from './ui/header';
-import Footer from './ui/Footer';
+import "@/app/ui/global.css";
+import { inter } from "@/app/ui/fonts";
+import { Metadata } from "next";
+import Header from "./ui/header";
+import Footer from "./ui/Footer";
+import WhatsappFloat from "@/app/ui/whatsapp-float";
 
 //%s reemplace el título de la página, si no hay título, se mostrará el valor por defecto
 export const metadata: Metadata = {
   title: {
-    template: '%s | Acme Dashboard',
-    default: 'Acme Dashboard',
+    template: "%s | Acme Dashboard",
+    default: "Acme Dashboard",
   },
-  description: 'The official Next.js Learn Dashboard built with App Router.',
-  metadataBase: new URL('https://next-learn-dashboard.vercel.sh'),
+  description: "The official Next.js Learn Dashboard built with App Router.",
+  metadataBase: new URL("https://next-learn-dashboard.vercel.sh"),
 };
 
 export default function RootLayout({
@@ -25,7 +26,8 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
-        </body>
+        <WhatsappFloat />
+      </body>
     </html>
   );
 }
