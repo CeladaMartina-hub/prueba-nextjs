@@ -2,7 +2,12 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { fetchProductById } from "@/app/lib/data";
 import { formatCurrency } from "@/app/lib/utils";
+import { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: 'Productos',
+};
+ 
 export default async function ProductDetailPage(props: {
   params: Promise<{ id: string }>;
 }) {
