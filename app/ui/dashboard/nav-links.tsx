@@ -4,6 +4,9 @@ import {
   UserGroupIcon,
   HomeIcon,
   DocumentDuplicateIcon,
+  ShoppingCartIcon,
+  StarIcon,
+  Square2StackIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,11 +19,12 @@ const links = [
   {
     name: "Productos",
     href: "/dashboard/products",
-    icon: DocumentDuplicateIcon,
+    icon: StarIcon,
   },
   { name: "Clientes", href: "/dashboard/customers", icon: UserGroupIcon },
-  { name: "Categorías", href: "/dashboard/categories", icon: UserGroupIcon },
-  { name: "Ventas", href: "/dashboard/sales", icon: UserGroupIcon }
+  { name: "Categorías", href: "/dashboard/categories", icon: Square2StackIcon },
+  { name: "Ventas", href: "/dashboard/sales", icon: ShoppingCartIcon },
+  { name: "Reportes", href: "/dashboard/reports", icon: DocumentDuplicateIcon }
 ];
 
 export default function NavLinks() {

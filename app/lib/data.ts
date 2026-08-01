@@ -213,3 +213,55 @@ export async function fetchProductsForSale() {
     throw new Error("Failed to fetch products.");
   }
 }
+
+
+//filtrado de reporte de ingresos
+export async function fetchRevenueSummary() {
+  try {
+    const today = await sql`
+      SELECT COALESCE(SUM(total), 0) AS total
+      FROM sales
+      WHERE sale_date >= CURRENT_DATE
+    `;
+
+    const thisWeek = await sql`
+      SELECT COALESCE(SUM(total), 0) AS total
+      FROM sales
+      WHERE sale_date >= date_trunc('week', CURRENT_DATE)
+    `;
+
+    const thisMonth = await sql`
+      SELECT COALESCE(SUM(total), 0) AS total
+      FROM sales
+      WHERE sale_date >= date_trunc('month', CURRENT_DATE)
+    `;
+
+    return {
+      today: Number(today[0].total),
+      thisWeek: Number(thisWeek[0].total),
+      thisMonth: Number(thisMonth[0].total),
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch revenue summary.');
+  }
+}
+
+// Para el gráfico: ventas agrupadas por día, últimos 30 días
+export async function fetchDailyRevenue() {
+  try {
+    const data = await sql<{ day: string; total: number }[]>`
+      SELECT
+        TO_CHAR(sale_date, 'YYYY-MM-DD') AS day,
+        SUM(total) AS total
+      FROM sales
+      WHERE sale_date >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY day
+      ORDER BY day ASC
+    `;
+    return data;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch daily revenue.');
+  }
+}
