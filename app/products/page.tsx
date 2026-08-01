@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchAllProducts } from '@/app/lib/data';
-import { formatCurrency } from '@/app/lib/utils';
+import { formatPrice } from '@/app/lib/utils';
 
 export default async function ProductsPage() {
   const products = await fetchAllProducts();
@@ -28,7 +28,7 @@ export default async function ProductsPage() {
             <div className="p-3">
               <p className="text-sm font-medium">{product.name}</p>
               <p className="mt-1 text-sm font-semibold text-blue-600">
-                {formatCurrency(product.price)}
+                {formatPrice(product.price)}
               </p>
             </div>
           </Link>

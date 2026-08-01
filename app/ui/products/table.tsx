@@ -1,7 +1,8 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { formatCurrency } from '@/app/lib/utils';
+import Image from "next/image";
+import Link from "next/link";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { formatPrice } from "@/app/lib/utils";
+import { deleteProduct } from "@/app/lib/actions";
 
 export default function ProductsTable({
   products,
@@ -57,11 +58,15 @@ export default function ProductsTable({
                       <p>{product.name}</p>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">{product.category_name}</td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {formatCurrency(product.price)}
+                    {product.category_name}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">{product.stock}</td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {formatPrice(product.price)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {product.stock}
+                  </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
                       <Link
@@ -70,9 +75,11 @@ export default function ProductsTable({
                       >
                         <PencilIcon className="w-5" />
                       </Link>
-                      <button className="rounded-md border p-2 hover:bg-gray-100">
-                        <TrashIcon className="w-5" />
-                      </button>
+                      <form action={deleteProduct.bind(null, product.id)}>
+                        <button className="rounded-md border p-2 hover:bg-gray-100">
+                          <TrashIcon className="w-5" />
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>

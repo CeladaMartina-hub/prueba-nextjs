@@ -97,6 +97,69 @@ export async function createProduct(
   redirect("/dashboard/products");
 }
 
+export async function updateProduct(
+  id: string,
+  currentImageUrl: string,
+  prevState: ProductState,
+  formData: FormData,
+) {
+  const validatedFields = ProductSchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description'),
+    price: formData.get('price'),
+    category_id: formData.get('category_id'),
+    stock: formData.get('stock'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Faltan campos. No se pudo actualizar el producto.',
+    };
+  }
+
+  const { name, description, price, category_id, stock } = validatedFields.data;
+
+  let imageUrl = currentImageUrl;
+  const imageFile = formData.get('image') as File;
+
+  if (imageFile && imageFile.size > 0) {
+    try {
+      const blob = await put(imageFile.name, imageFile, {
+        access: 'public',
+        addRandomSuffix: true,
+      });
+      imageUrl = blob.url;
+    } catch (error) {
+      return { message: 'Error al subir la imagen.' };
+    }
+  }
+
+  try {
+    await sql`
+      UPDATE products
+      SET name = ${name}, description = ${description ?? null}, price = ${price},
+          image_url = ${imageUrl}, category_id = ${category_id}, stock = ${stock}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    return { message: 'Database Error: No se pudo actualizar el producto.' };
+  }
+
+  revalidatePath('/dashboard/products');
+  redirect('/dashboard/products');
+}
+
+export async function deleteProduct(id: string) {
+  try {
+    await sql`DELETE FROM products WHERE id = ${id}`;
+    revalidatePath('/dashboard/products');
+  } catch (error) {
+    console.error(error);
+    throw new Error('Database Error: No se pudo eliminar el producto.');
+  }
+}
+
 //clientes
 const CustomerSchema = z.object({
   first_name: z.string().min(1, 'El nombre es obligatorio.'),
