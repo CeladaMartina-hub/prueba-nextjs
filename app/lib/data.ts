@@ -5,6 +5,7 @@ import {
   InvoiceForm,
   InvoicesTable,
   LatestInvoiceRaw,
+  Product,
   Revenue,
 } from "./definitions";
 import { formatCurrency } from "./utils";
@@ -227,5 +228,26 @@ export async function fetchCategories() {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch categories.");
+  }
+}
+
+export async function fetchProducts() {
+  try {
+    const products = await sql<(Product & { category_name: string })[]>`
+      SELECT
+        products.id,
+        products.name,
+        products.price,
+        products.image_url,
+        products.stock,
+        categories.name AS category_name
+      FROM products
+      JOIN categories ON products.category_id = categories.id
+      ORDER BY products.created_at DESC
+    `;
+    return products;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch products.');
   }
 }

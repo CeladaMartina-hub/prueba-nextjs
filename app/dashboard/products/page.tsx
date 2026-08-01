@@ -1,17 +1,27 @@
-import { fetchCategories } from "@/app/lib/data";
-import Form from "@/app/ui/products/create-form";
-import { lusitana } from '@/app/ui/fonts';
-import { CreateProduct } from "@/app/ui/products/buttons";
+import { fetchProducts } from '@/app/lib/data';
+import Link from 'next/link';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import ProductsTable from '@/app/ui/products/table';
+
 
 export default async function Page() {
-//   const categories = await fetchCategories();
-//   return <Form categories={categories} />;
- <div className="w-full">
+  const products = await fetchProducts();
+
+  return (
+    <div className="w-full">
       <div className="flex w-full items-center justify-between">
-        <h1 className={`${lusitana.className} text-2xl`}>Products</h1>
+        <h1 className="text-2xl">Productos</h1>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-        <CreateProduct />
+        <Link
+          href="/dashboard/products/create"
+          className="flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-500"
+        >
+          <span>Crear producto</span>
+          <PlusIcon className="h-5" />
+        </Link>
       </div>
+      <ProductsTable products={products} />
     </div>
-}   
+  );
+}
