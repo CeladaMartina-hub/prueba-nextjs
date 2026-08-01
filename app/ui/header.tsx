@@ -4,7 +4,7 @@ import MobileMenu from './mobile-menu';
 
 const links = [
   { name: 'Inicio', href: '/' },
-  { name: 'Productos', href: '/dashboard/products/create' },
+  { name: 'Productos', href: '/products' },
   { name: 'Contacto', href: '/contact' },
 ];
 
