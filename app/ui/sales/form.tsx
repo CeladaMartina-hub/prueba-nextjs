@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useActionState } from 'react';
-import Link from 'next/link';
-import { createSale, SaleState } from '@/app/lib/actions';
+import { useState, useActionState } from "react";
+import Link from "next/link";
+import { createSale, SaleState } from "@/app/lib/actions";
 
 type Customer = { id: string; first_name: string; last_name: string };
 type Product = { id: string; name: string; price: number; stock: number };
@@ -10,7 +10,7 @@ type Kit = { id: string; name: string; price: number; stock: number };
 
 type SaleLine = {
   item_id: string;
-  item_type: 'product' | 'kit';
+  item_type: "product" | "kit";
   item_name: string;
   unit_price: number;
   quantity: number;
@@ -29,58 +29,66 @@ export default function SaleForm({
   const initialState: SaleState = { message: null };
   const [state, formAction] = useActionState(createSale, initialState);
 
-  const [customerType, setCustomerType] = useState<'registered' | 'counter'>('registered');
-  const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [customerName, setCustomerName] = useState('');
+  const [customerType, setCustomerType] = useState<"registered" | "counter">(
+    "registered",
+  );
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [customerName, setCustomerName] = useState("");
 
   const [lines, setLines] = useState<SaleLine[]>([]);
-  const [productToAdd, setProductToAdd] = useState('');
-  const [kitToAdd, setKitToAdd] = useState('');
+  const [productToAdd, setProductToAdd] = useState("");
+  const [kitToAdd, setKitToAdd] = useState("");
 
   function addProductLine() {
     if (!productToAdd) return;
     const product = products.find((p) => p.id === productToAdd);
     if (!product) return;
-    if (lines.some((l) => l.item_id === product.id && l.item_type === 'product')) return;
+    if (
+      lines.some((l) => l.item_id === product.id && l.item_type === "product")
+    )
+      return;
 
     setLines([
       ...lines,
       {
         item_id: product.id,
-        item_type: 'product',
+        item_type: "product",
         item_name: product.name,
         unit_price: product.price,
         quantity: 1,
         maxStock: product.stock,
       },
     ]);
-    setProductToAdd('');
+    setProductToAdd("");
   }
 
   function addKitLine() {
     if (!kitToAdd) return;
     const kit = kits.find((k) => k.id === kitToAdd);
     if (!kit) return;
-    if (lines.some((l) => l.item_id === kit.id && l.item_type === 'kit')) return;
+    if (lines.some((l) => l.item_id === kit.id && l.item_type === "kit"))
+      return;
 
     setLines([
       ...lines,
       {
         item_id: kit.id,
-        item_type: 'kit',
+        item_type: "kit",
         item_name: `${kit.name} (kit)`,
         unit_price: kit.price,
         quantity: 1,
         maxStock: kit.stock,
       },
     ]);
-    setKitToAdd('');
+    setKitToAdd("");
   }
 
   function updateQuantity(itemId: string, itemType: string, quantity: number) {
     setLines(
       lines.map((l) =>
-        l.item_id === itemId && l.item_type === itemType ? { ...l, quantity } : l,
+        l.item_id === itemId && l.item_type === itemType
+          ? { ...l, quantity }
+          : l,
       ),
     );
   }
@@ -89,14 +97,19 @@ export default function SaleForm({
     setLines(
       lines.map((l) =>
         l.item_id === itemId && l.item_type === itemType
-          ? { ...l, quantity: Math.min(Math.max(1, l.quantity || 1), l.maxStock) }
+          ? {
+              ...l,
+              quantity: Math.min(Math.max(1, l.quantity || 1), l.maxStock),
+            }
           : l,
       ),
     );
   }
 
   function removeLine(itemId: string, itemType: string) {
-    setLines(lines.filter((l) => !(l.item_id === itemId && l.item_type === itemType)));
+    setLines(
+      lines.filter((l) => !(l.item_id === itemId && l.item_type === itemType)),
+    );
   }
 
   const total = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0);
@@ -115,23 +128,23 @@ export default function SaleForm({
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
-                checked={customerType === 'registered'}
-                onChange={() => setCustomerType('registered')}
+                checked={customerType === "registered"}
+                onChange={() => setCustomerType("registered")}
               />
               Cliente registrado
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
-                checked={customerType === 'counter'}
-                onChange={() => setCustomerType('counter')}
+                checked={customerType === "counter"}
+                onChange={() => setCustomerType("counter")}
               />
               Mostrador
             </label>
           </div>
         </div>
 
-        {customerType === 'registered' ? (
+        {customerType === "registered" ? (
           <div className="mb-6">
             <select
               value={selectedCustomerId}
@@ -159,7 +172,9 @@ export default function SaleForm({
         )}
 
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium">Agregar producto</label>
+          <label className="mb-2 block text-sm font-medium">
+            Agregar producto
+          </label>
           <div className="flex gap-2">
             <select
               value={productToAdd}
@@ -222,24 +237,43 @@ export default function SaleForm({
               </thead>
               <tbody>
                 {lines.map((line) => (
-                  <tr key={`${line.item_type}-${line.item_id}`} className="border-b last:border-none">
+                  <tr
+                    key={`${line.item_type}-${line.item_id}`}
+                    className="border-b last:border-none"
+                  >
                     <td className="px-3 py-2">{line.item_name}</td>
                     <td className="px-3 py-2">
                       <input
                         type="number"
                         min={1}
                         max={line.maxStock}
-                        value={line.quantity || ''}
+                        value={line.quantity || ""}
                         onChange={(e) =>
-                          updateQuantity(line.item_id, line.item_type, Number(e.target.value))
+                          updateQuantity(
+                            line.item_id,
+                            line.item_type,
+                            Number(e.target.value),
+                          )
                         }
-                        onBlur={() => normalizeQuantity(line.item_id, line.item_type)}
+                        onBlur={() =>
+                          normalizeQuantity(line.item_id, line.item_type)
+                        }
                         className="w-20 rounded-md border border-gray-200 px-2 py-1"
                       />
+                      {line.quantity > line.maxStock && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Máximo disponible: {line.maxStock}
+                        </p>
+                      )}
                     </td>
-                    <td className="px-3 py-2">${line.unit_price.toLocaleString('es-AR')}</td>
                     <td className="px-3 py-2">
-                      ${(line.quantity * line.unit_price).toLocaleString('es-AR')}
+                      ${line.unit_price.toLocaleString("es-AR")}
+                    </td>
+                    <td className="px-3 py-2">
+                      $
+                      {(line.quantity * line.unit_price).toLocaleString(
+                        "es-AR",
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       <button
@@ -258,10 +292,12 @@ export default function SaleForm({
         )}
 
         <p className="text-right text-lg font-semibold">
-          Total: ${total.toLocaleString('es-AR')}
+          Total: ${total.toLocaleString("es-AR")}
         </p>
 
-        {state.message && <p className="mt-2 text-sm text-red-500">{state.message}</p>}
+        {state.message && (
+          <p className="mt-2 text-sm text-red-500">{state.message}</p>
+        )}
       </div>
 
       <div className="mt-6 flex justify-end gap-4">
