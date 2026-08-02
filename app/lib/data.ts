@@ -404,3 +404,20 @@ export async function fetchKitsForSale() {
     throw new Error('Failed to fetch kits.');
   }
 }
+
+export async function fetchPublicKits() {
+  try {
+    const kits = await sql<
+      { id: string; name: string; image_url: string; price: number; stock: number }[]
+    >`
+      SELECT id, name, image_url, price, stock
+      FROM kits
+      WHERE stock > 0
+      ORDER BY created_at DESC
+    `;
+    return kits;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch kits.');
+  }
+}

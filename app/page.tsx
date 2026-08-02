@@ -1,9 +1,10 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { fetchCategoriesWithImage } from '@/app/lib/data';
+import Link from "next/link";
+import Image from "next/image";
+import { fetchCategoriesWithImage, fetchPublicKits } from "@/app/lib/data";
 
 export default async function HomePage() {
   const categories = await fetchCategoriesWithImage();
+  const kits = await fetchPublicKits();
 
   return (
     <div>
@@ -59,9 +60,30 @@ export default async function HomePage() {
                   </div>
                 )}
               </div>
-              <p className="p-2 text-center text-sm font-medium">{category.name}</p>
+              <p className="p-2 text-center text-sm font-medium">
+                {category.name}
+              </p>
             </Link>
           ))}
+
+          {kits.length > 0 && (
+            <Link
+              href="/kits"
+              className="group overflow-hidden rounded-xl border"
+            >
+              <div className="relative aspect-square bg-gray-100">
+                <Image
+                  src={kits[0].image_url}
+                  alt="Kits armados"
+                  fill
+                  className="object-cover transition group-hover:scale-105"
+                />
+              </div>
+              <p className="p-2 text-center text-sm font-medium">
+                Kits armados
+              </p>
+            </Link>
+          )}
         </div>
       </section>
     </div>
