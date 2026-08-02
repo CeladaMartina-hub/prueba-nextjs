@@ -303,3 +303,19 @@ export async function fetchPurchaseById(id: string) {
     throw new Error('Failed to fetch purchase.');
   }
 }
+
+export async function fetchPurchasesForSelect() {
+  try {
+    const purchases = await sql<
+      { id: string; description: string; quantity: number; unit: string; total_cost: number }[]
+    >`
+      SELECT id, description, quantity, unit, total_cost
+      FROM purchases
+      ORDER BY purchase_date DESC
+    `;
+    return purchases;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch purchases.');
+  }
+}

@@ -1,17 +1,34 @@
-'use client';
+"use client";
 
-import { useActionState } from 'react';
-import { Category, ProductState } from '@/app/lib/definitions';
-import { createProduct } from '@/app/lib/actions';
-import Link from 'next/link';
+import { useActionState } from "react";
+import { Category, ProductState } from "@/app/lib/definitions";
+import { createProduct } from "@/app/lib/actions";
+import Link from "next/link";
+import CostCalculator from "@/app/ui/products/cost-calculator";
 
-export default function Form({ categories }: { categories: Category[] }) {
+export default function Form({
+  categories,
+  purchases,
+}: {
+  categories: Category[];
+  purchases: {
+    id: string;
+    description: string;
+    quantity: number;
+    unit: string;
+    total_cost: number;
+  }[];
+}) {
   const initialState: ProductState = { message: null, errors: {} };
   const [state, formAction] = useActionState(createProduct, initialState);
 
   return (
     <form action={formAction} encType="multipart/form-data">
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
+        <div className="flex w-full items-center justify-between">
+          <h1 className="text-2xl">Productos</h1>
+        </div>
+        <br/>
         <div className="mb-4">
           <label htmlFor="name" className="mb-2 block text-sm font-medium">
             Nombre
@@ -28,7 +45,10 @@ export default function Form({ categories }: { categories: Category[] }) {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="description" className="mb-2 block text-sm font-medium">
+          <label
+            htmlFor="description"
+            className="mb-2 block text-sm font-medium"
+          >
             Descripción
           </label>
           <textarea
@@ -39,21 +59,7 @@ export default function Form({ categories }: { categories: Category[] }) {
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="price" className="mb-2 block text-sm font-medium">
-            Precio
-          </label>
-          <input
-            id="price"
-            name="price"
-            type="number"
-            step="1"
-            className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
-          />
-          {state.errors?.price && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.price[0]}</p>
-          )}
-        </div>
+        <CostCalculator purchases={purchases} />
 
         <div className="mb-4">
           <label htmlFor="stock" className="mb-2 block text-sm font-medium">
@@ -69,7 +75,10 @@ export default function Form({ categories }: { categories: Category[] }) {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="category_id" className="mb-2 block text-sm font-medium">
+          <label
+            htmlFor="category_id"
+            className="mb-2 block text-sm font-medium"
+          >
             Categoría
           </label>
           <select
@@ -85,7 +94,9 @@ export default function Form({ categories }: { categories: Category[] }) {
             ))}
           </select>
           {state.errors?.category_id && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.category_id[0]}</p>
+            <p className="mt-1 text-sm text-red-500">
+              {state.errors.category_id[0]}
+            </p>
           )}
         </div>
 

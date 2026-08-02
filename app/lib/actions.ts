@@ -43,10 +43,10 @@ export async function createProduct(
   prevState: ProductState,
   formData: FormData,
 ) {
-  console.log("name:", formData.get("name"));
-  console.log("price:", formData.get("price"));
-  console.log("category_id:", formData.get("category_id"));
-  console.log("image:", formData.get("image"));
+  const cost = formData.get("cost");
+  const purchase_id = formData.get("purchase_id") as string;
+  const portion_size = formData.get("portion_size");
+  const portion_unit = formData.get("portion_unit") as string;
 
   const validatedFields = ProductSchema.safeParse({
     name: formData.get("name"),
@@ -82,12 +82,14 @@ export async function createProduct(
     return { message: "Error al subir la imagen." };
   }
 
-  console.log("Imagen subida OK:", imageUrl);
-
   try {
     await sql`
-      INSERT INTO products (name, description, price, image_url, category_id, stock)
-      VALUES (${name}, ${description ?? null}, ${price}, ${imageUrl}, ${category_id}, ${stock})
+      INSERT INTO products (name, description, price, image_url, category_id, stock, cost, purchase_id, portion_size, portion_unit)
+  VALUES (
+    ${name}, ${description ?? null}, ${price}, ${imageUrl}, ${category_id}, ${stock},
+    ${cost ? Number(cost) : null}, ${purchase_id || null},
+    ${portion_size ? Number(portion_size) : null}, ${portion_unit || null}
+  )
     `;
   } catch (error) {
     return { message: "Database Error: No se pudo crear el producto." };
@@ -505,15 +507,14 @@ export async function createSale(prevState: SaleState, formData: FormData) {
   redirect("/dashboard/sales");
 }
 
-
 //comprado
 const PurchaseSchema = z.object({
-  purchase_date: z.string().min(1, 'La fecha es obligatoria.'),
+  purchase_date: z.string().min(1, "La fecha es obligatoria."),
   supplier: z.string().optional(),
-  description: z.string().min(1, 'La descripción es obligatoria.'),
-  quantity: z.coerce.number().gt(0, 'La cantidad debe ser mayor a 0.'),
-  unit: z.enum(['kg', 'g', 'unit']),
-  total_cost: z.coerce.number().gt(0, 'El costo debe ser mayor a 0.'),
+  description: z.string().min(1, "La descripción es obligatoria."),
+  quantity: z.coerce.number().gt(0, "La cantidad debe ser mayor a 0."),
+  unit: z.enum(["kg", "g", "unit"]),
+  total_cost: z.coerce.number().gt(0, "El costo debe ser mayor a 0."),
 });
 
 export type PurchaseState = {
@@ -526,20 +527,23 @@ export type PurchaseState = {
   message?: string | null;
 };
 
-export async function createPurchase(prevState: PurchaseState, formData: FormData) {
+export async function createPurchase(
+  prevState: PurchaseState,
+  formData: FormData,
+) {
   const validatedFields = PurchaseSchema.safeParse({
-    purchase_date: formData.get('purchase_date'),
-    supplier: formData.get('supplier'),
-    description: formData.get('description'),
-    quantity: formData.get('quantity'),
-    unit: formData.get('unit'),
-    total_cost: formData.get('total_cost'),
+    purchase_date: formData.get("purchase_date"),
+    supplier: formData.get("supplier"),
+    description: formData.get("description"),
+    quantity: formData.get("quantity"),
+    unit: formData.get("unit"),
+    total_cost: formData.get("total_cost"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Faltan campos. No se pudo registrar la compra.',
+      message: "Faltan campos. No se pudo registrar la compra.",
     };
   }
 
@@ -552,9 +556,9 @@ export async function createPurchase(prevState: PurchaseState, formData: FormDat
       VALUES (${purchase_date}, ${supplier || null}, ${description}, ${quantity}, ${unit}, ${total_cost})
     `;
   } catch (error) {
-    return { message: 'Database Error: No se pudo registrar la compra.' };
+    return { message: "Database Error: No se pudo registrar la compra." };
   }
 
-  revalidatePath('/dashboard/purchases');
-  redirect('/dashboard/purchases');
+  revalidatePath("/dashboard/purchases");
+  redirect("/dashboard/purchases");
 }
