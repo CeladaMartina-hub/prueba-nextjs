@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useActionState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { createKit, KitState } from '@/app/lib/actions';
+import { KitState } from '@/app/lib/actions';
 
 type ProductOption = {
   id: string;
@@ -20,22 +21,39 @@ type KitLine = {
   item_cost: number;
 };
 
+type ExistingKit = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string;
+  price: number;
+  items: { product_id: string; product_name: string; quantity: number; unit: string; item_cost: number }[];
+};
+
 function convert(value: number, from: string, to: string) {
   if (from === to) return value;
   if (from === 'kg' && to === 'g') return value * 1000;
   if (from === 'g' && to === 'kg') return value / 1000;
-  return value; // unit no se convierte
+  return value;
 }
 
-export default function KitBuilder({ products }: { products: ProductOption[] }) {
+export default function KitBuilder({
+  products,
+  kit,
+  action,
+}: {
+  products: ProductOption[];
+  kit?: ExistingKit;
+  action: (prevState: KitState, formData: FormData) => Promise<KitState>;
+}) {
   const initialState: KitState = { message: null };
-  const [state, formAction] = useActionState(createKit, initialState);
+  const [state, formAction] = useActionState(action, initialState);
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
+  const [name, setName] = useState(kit?.name ?? '');
+  const [description, setDescription] = useState(kit?.description ?? '');
+  const [price, setPrice] = useState(kit?.price?.toString() ?? '');
 
-  const [lines, setLines] = useState<KitLine[]>([]);
+  const [lines, setLines] = useState<KitLine[]>(kit?.items ?? []);
   const [productToAdd, setProductToAdd] = useState('');
   const [quantityToAdd, setQuantityToAdd] = useState('');
   const [unitToAdd, setUnitToAdd] = useState('g');
@@ -97,14 +115,29 @@ export default function KitBuilder({ products }: { products: ProductOption[] }) 
           <textarea
             name="description"
             rows={3}
-            value={description}
+            value={description ?? ''}
             onChange={(e) => setDescription(e.target.value)}
             className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
           />
         </div>
 
+        {kit?.image_url && (
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium">Foto actual</label>
+            <Image
+              src={kit.image_url}
+              alt={kit.name}
+              width={100}
+              height={100}
+              className="rounded-md object-cover"
+            />
+          </div>
+        )}
+
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium">Foto del kit</label>
+          <label className="mb-2 block text-sm font-medium">
+            {kit ? 'Reemplazar foto (opcional)' : 'Foto del kit'}
+          </label>
           <input name="image" type="file" accept="image/*" className="block w-full text-sm" />
         </div>
 
@@ -231,7 +264,7 @@ export default function KitBuilder({ products }: { products: ProductOption[] }) 
           disabled={lines.length === 0}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
         >
-          Crear kit
+          {kit ? 'Guardar cambios' : 'Crear kit'}
         </button>
       </div>
     </form>

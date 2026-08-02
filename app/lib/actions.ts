@@ -665,3 +665,73 @@ export async function deleteKit(id: string) {
     throw new Error('Database Error: No se pudo eliminar el kit.');
   }
 }
+
+export async function updateKit(
+  id: string,
+  currentImageUrl: string,
+  prevState: KitState,
+  formData: FormData,
+) {
+  const itemsRaw = formData.get('items') as string;
+
+  let items;
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch {
+    return { message: 'Error al leer los productos del kit.' };
+  }
+
+  const validatedFields = KitSchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description'),
+    price: formData.get('price'),
+    cost: formData.get('cost'),
+    items,
+  });
+
+  if (!validatedFields.success) {
+    return { message: 'Faltan datos. Revisá el nombre, precio y los productos agregados.' };
+  }
+
+  const { name, description, price, cost, items: kitItems } = validatedFields.data;
+
+  let imageUrl = currentImageUrl;
+  const imageFile = formData.get('image') as File;
+  if (imageFile && imageFile.size > 0) {
+    try {
+      const blob = await put(imageFile.name, imageFile, {
+        access: 'public',
+        addRandomSuffix: true,
+      });
+      imageUrl = blob.url;
+    } catch (error) {
+      return { message: 'Error al subir la imagen.' };
+    }
+  }
+
+  try {
+    await sql.begin(async (sql) => {
+      await sql`
+        UPDATE kits
+        SET name = ${name}, description = ${description ?? null}, image_url = ${imageUrl},
+            price = ${price}, cost = ${cost}
+        WHERE id = ${id}
+      `;
+
+      await sql`DELETE FROM kit_items WHERE kit_id = ${id}`;
+
+      for (const item of kitItems) {
+        await sql`
+          INSERT INTO kit_items (kit_id, product_id, product_name, quantity, unit, item_cost)
+          VALUES (${id}, ${item.product_id}, ${item.product_name}, ${item.quantity}, ${item.unit}, ${item.item_cost})
+        `;
+      }
+    });
+  } catch (error) {
+    console.error('Error actualizando kit:', error);
+    return { message: 'Database Error: No se pudo actualizar el kit.' };
+  }
+
+  revalidatePath('/dashboard/kits');
+  redirect(`/dashboard/kits/${id}`);
+}
