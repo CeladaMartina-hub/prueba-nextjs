@@ -570,3 +570,88 @@ export async function createPurchase(
   revalidatePath("/dashboard/purchases");
   redirect("/dashboard/purchases");
 }
+
+//kits
+const KitItemSchema = z.object({
+  product_id: z.string().min(1),
+  product_name: z.string().min(1),
+  quantity: z.coerce.number().gt(0),
+  unit: z.string().min(1),
+  item_cost: z.coerce.number().gte(0),
+});
+
+const KitSchema = z.object({
+  name: z.string().min(1, 'El nombre es obligatorio.'),
+  description: z.string().optional(),
+  price: z.coerce.number().gt(0, 'El precio debe ser mayor a 0.'),
+  cost: z.coerce.number().gte(0),
+  items: z.array(KitItemSchema).min(1, 'Agregá al menos un producto al kit.'),
+});
+
+export type KitState = {
+  message?: string | null;
+};
+
+export async function createKit(prevState: KitState, formData: FormData) {
+  const itemsRaw = formData.get('items') as string;
+
+  let items;
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch {
+    return { message: 'Error al leer los productos del kit.' };
+  }
+
+  const validatedFields = KitSchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description'),
+    price: formData.get('price'),
+    cost: formData.get('cost'),
+    items,
+  });
+
+  if (!validatedFields.success) {
+    return { message: 'Faltan datos. Revisá el nombre, precio y los productos agregados.' };
+  }
+
+  const { name, description, price, cost, items: kitItems } = validatedFields.data;
+
+  const imageFile = formData.get('image') as File;
+  if (!imageFile || imageFile.size === 0) {
+    return { message: 'La foto del kit es obligatoria.' };
+  }
+
+  let imageUrl: string;
+  try {
+    const blob = await put(imageFile.name, imageFile, {
+      access: 'public',
+      addRandomSuffix: true,
+    });
+    imageUrl = blob.url;
+  } catch (error) {
+    return { message: 'Error al subir la imagen.' };
+  }
+
+  try {
+    await sql.begin(async (sql) => {
+      const [kit] = await sql`
+        INSERT INTO kits (name, description, image_url, price, cost)
+        VALUES (${name}, ${description ?? null}, ${imageUrl}, ${price}, ${cost})
+        RETURNING id
+      `;
+
+      for (const item of kitItems) {
+        await sql`
+          INSERT INTO kit_items (kit_id, product_id, product_name, quantity, unit, item_cost)
+          VALUES (${kit.id}, ${item.product_id}, ${item.product_name}, ${item.quantity}, ${item.unit}, ${item.item_cost})
+        `;
+      }
+    });
+  } catch (error) {
+    console.error('Error creando kit:', error);
+    return { message: 'Database Error: No se pudo crear el kit.' };
+  }
+
+  revalidatePath('/dashboard/kits');
+  redirect('/dashboard/kits');
+}

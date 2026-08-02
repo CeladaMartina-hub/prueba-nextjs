@@ -328,3 +328,41 @@ export async function fetchPurchasesForSelect() {
     throw new Error("Failed to fetch purchases.");
   }
 }
+
+//kits
+export async function fetchProductsForKit() {
+  try {
+    const products = await sql<
+      {
+        id: string;
+        name: string;
+        cost: number | null;
+        portion_size: number | null;
+        portion_unit: string | null;
+      }[]
+    >`
+      SELECT id, name, cost, portion_size, portion_unit
+      FROM products
+      WHERE cost IS NOT NULL AND portion_size IS NOT NULL
+      ORDER BY name ASC
+    `;
+    return products;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch products.');
+  }
+}
+
+export async function fetchKits() {
+  try {
+    const kits = await sql<
+      { id: string; name: string; image_url: string; price: number; cost: number }[]
+    >`
+      SELECT id, name, image_url, price, cost FROM kits ORDER BY created_at DESC
+    `;
+    return kits;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch kits.');
+  }
+}
