@@ -189,7 +189,7 @@ export async function fetchSaleById(id: string) {
     `;
 
     const items = await sql`
-      SELECT product_id, product_name, quantity, unit_price
+      SELECT product_id, kit_id, item_type, item_name, quantity, unit_price
       FROM sale_items
       WHERE sale_id = ${id}
     `;
@@ -390,5 +390,17 @@ export async function fetchKitById(id: string) {
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch kit.');
+  }
+}
+
+export async function fetchKitsForSale() {
+  try {
+    const kits = await sql<{ id: string; name: string; price: number; stock: number }[]>`
+      SELECT id, name, price, stock FROM kits WHERE stock > 0 ORDER BY name ASC
+    `;
+    return kits;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch kits.');
   }
 }

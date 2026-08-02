@@ -419,17 +419,18 @@ export async function deleteCategory(id: string) {
 //ventas
 
 const SaleItemSchema = z.object({
-  product_id: z.string().min(1),
-  product_name: z.string().min(1),
+  item_id: z.string().min(1),
+  item_type: z.enum(['product', 'kit']),
+  item_name: z.string().min(1),
   quantity: z.coerce.number().int().gt(0),
   unit_price: z.coerce.number().gt(0),
 });
 
 const SaleSchema = z.object({
-  customer_type: z.enum(["registered", "counter"]),
+  customer_type: z.enum(['registered', 'counter']),
   customer_id: z.string().optional(),
   customer_name: z.string().optional(),
-  items: z.array(SaleItemSchema).min(1, "Agregá al menos un producto."),
+  items: z.array(SaleItemSchema).min(1, 'Agregá al menos un producto o kit.'),
 });
 
 export type SaleState = {
@@ -437,16 +438,16 @@ export type SaleState = {
 };
 
 export async function createSale(prevState: SaleState, formData: FormData) {
-  const customer_type = formData.get("customer_type") as string;
-  const customer_id = formData.get("customer_id") as string;
-  const customer_name = formData.get("customer_name") as string;
-  const itemsRaw = formData.get("items") as string;
+  const customer_type = formData.get('customer_type') as string;
+  const customer_id = formData.get('customer_id') as string;
+  const customer_name = formData.get('customer_name') as string;
+  const itemsRaw = formData.get('items') as string;
 
   let items;
   try {
     items = JSON.parse(itemsRaw);
   } catch {
-    return { message: "Error al leer los productos de la venta." };
+    return { message: 'Error al leer los productos de la venta.' };
   }
 
   const validatedFields = SaleSchema.safeParse({
@@ -457,62 +458,65 @@ export async function createSale(prevState: SaleState, formData: FormData) {
   });
 
   if (!validatedFields.success) {
-    return {
-      message: "Faltan datos. Revisá el cliente y los productos agregados.",
-    };
+    return { message: 'Faltan datos. Revisá el cliente y los productos agregados.' };
   }
 
   const data = validatedFields.data;
-  const finalCustomerId =
-    data.customer_type === "registered" ? (data.customer_id ?? null) : null;
-  const finalCustomerName =
-    data.customer_type === "counter" ? data.customer_name || null : null;
-  const total = data.items.reduce(
-    (sum, item) => sum + item.quantity * item.unit_price,
-    0,
-  );
+  const finalCustomerId = data.customer_type === 'registered' ? (data.customer_id ?? null) : null;
+  const finalCustomerName = data.customer_type === 'counter' ? (data.customer_name || null) : null;
+  const total = data.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
 
   try {
     // Verificamos stock disponible antes de confirmar
     for (const item of data.items) {
+      const table = item.item_type === 'kit' ? 'kits' : 'products';
       const stockCheck = await sql`
-        SELECT stock FROM products WHERE id = ${item.product_id}
+        SELECT stock FROM ${sql(table)} WHERE id = ${item.item_id}
       `;
       const currentStock = stockCheck[0]?.stock ?? 0;
       if (currentStock < item.quantity) {
         return {
-          message: `Stock insuficiente para "${item.product_name}" (disponible: ${currentStock}).`,
+          message: `Stock insuficiente para "${item.item_name}" (disponible: ${currentStock}).`,
         };
       }
     }
 
-    // Transacción: crea venta, items, y descuenta stock, todo o nada
     await sql.begin(async (sql) => {
       const [sale] = await sql`
         INSERT INTO sales (customer_id, customer_name, total)
-        VALUES (${finalCustomerId ?? null}, ${finalCustomerName ?? null}, ${total})
+        VALUES (${finalCustomerId}, ${finalCustomerName}, ${total})
         RETURNING id
       `;
 
       for (const item of data.items) {
         await sql`
-          INSERT INTO sale_items (sale_id, product_id, product_name, quantity, unit_price)
-          VALUES (${sale.id}, ${item.product_id}, ${item.product_name}, ${item.quantity}, ${item.unit_price})
+          INSERT INTO sale_items (sale_id, product_id, kit_id, item_type, item_name, quantity, unit_price)
+          VALUES (
+            ${sale.id},
+            ${item.item_type === 'product' ? item.item_id : null},
+            ${item.item_type === 'kit' ? item.item_id : null},
+            ${item.item_type},
+            ${item.item_name},
+            ${item.quantity},
+            ${item.unit_price}
+          )
         `;
 
+        const table = item.item_type === 'kit' ? 'kits' : 'products';
         await sql`
-          UPDATE products SET stock = stock - ${item.quantity} WHERE id = ${item.product_id}
+          UPDATE ${sql(table)} SET stock = stock - ${item.quantity} WHERE id = ${item.item_id}
         `;
       }
     });
   } catch (error) {
-    console.error("Error creando venta:", error);
-    return { message: "Database Error: No se pudo registrar la venta." };
+    console.error('Error creando venta:', error);
+    return { message: 'Database Error: No se pudo registrar la venta.' };
   }
 
-  revalidatePath("/dashboard/sales");
-  revalidatePath("/dashboard/products");
-  redirect("/dashboard/sales");
+  revalidatePath('/dashboard/sales');
+  revalidatePath('/dashboard/products');
+  revalidatePath('/dashboard/kits');
+  redirect('/dashboard/sales');
 }
 
 //comprado

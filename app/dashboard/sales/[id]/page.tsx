@@ -34,7 +34,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           <tbody>
             {sale.items.map((item, i) => (
               <tr key={i} className="border-b last:border-none">
-                <td className="px-3 py-2">{item.product_name}</td>
+                <td className="px-3 py-2">{item.item_name}</td>
                 <td className="px-3 py-2">{item.quantity}</td>
                 <td className="px-3 py-2">${item.unit_price.toLocaleString('es-AR')}</td>
                 <td className="px-3 py-2">
