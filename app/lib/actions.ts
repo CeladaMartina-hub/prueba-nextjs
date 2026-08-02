@@ -105,6 +105,11 @@ export async function updateProduct(
   prevState: ProductState,
   formData: FormData,
 ) {
+  const cost = formData.get("cost");
+  const purchase_id = formData.get("purchase_id") as string;
+  const portion_size = formData.get("portion_size");
+  const portion_unit = formData.get("portion_unit") as string;
+
   const validatedFields = ProductSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -139,10 +144,13 @@ export async function updateProduct(
 
   try {
     await sql`
-      UPDATE products
-      SET name = ${name}, description = ${description ?? null}, price = ${price},
-          image_url = ${imageUrl}, category_id = ${category_id}, stock = ${stock}
-      WHERE id = ${id}
+     UPDATE products
+  SET name = ${name}, description = ${description ?? null}, price = ${price},
+      image_url = ${imageUrl}, category_id = ${category_id}, stock = ${stock},
+      cost = ${cost ? Number(cost) : null}, purchase_id = ${purchase_id || null},
+      portion_size = ${portion_size ? Number(portion_size) : null},
+      portion_unit = ${portion_unit || null}
+  WHERE id = ${id}
     `;
   } catch (error) {
     return { message: "Database Error: No se pudo actualizar el producto." };

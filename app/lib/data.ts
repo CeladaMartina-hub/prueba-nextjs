@@ -105,17 +105,21 @@ export async function fetchProductById(id: string) {
   try {
     const data = await sql<(Product & { category_name: string })[]>`
       SELECT
-        products.id,
-        products.name,
-        products.description,
-        products.price,
-        products.image_url,
-        products.stock,
-        products.category_id,
-        categories.name AS category_name
-      FROM products
-      JOIN categories ON products.category_id = categories.id
-      WHERE products.id = ${id}
+  products.id,
+  products.name,
+  products.description,
+  products.price,
+  products.image_url,
+  products.stock,
+  products.category_id,
+  products.cost,
+  products.purchase_id,
+  products.portion_size,
+  products.portion_unit,
+  categories.name AS category_name
+FROM products
+JOIN categories ON products.category_id = categories.id
+WHERE products.id = ${id}
     `;
     return data[0];
   } catch (error) {
@@ -214,7 +218,6 @@ export async function fetchProductsForSale() {
   }
 }
 
-
 //filtrado de reporte de ingresos
 export async function fetchRevenueSummary() {
   try {
@@ -242,8 +245,8 @@ export async function fetchRevenueSummary() {
       thisMonth: Number(thisMonth[0].total),
     };
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch revenue summary.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch revenue summary.");
   }
 }
 
@@ -261,8 +264,8 @@ export async function fetchDailyRevenue() {
     `;
     return data;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch daily revenue.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch daily revenue.");
   }
 }
 
@@ -274,8 +277,8 @@ export async function fetchCategoriesWithImage() {
     `;
     return categories;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch categories.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch categories.");
   }
 }
 
@@ -287,8 +290,8 @@ export async function fetchPurchases() {
     `;
     return purchases;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch purchases.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch purchases.");
   }
 }
 
@@ -299,15 +302,21 @@ export async function fetchPurchaseById(id: string) {
     `;
     return data[0];
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch purchase.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch purchase.");
   }
 }
 
 export async function fetchPurchasesForSelect() {
   try {
     const purchases = await sql<
-      { id: string; description: string; quantity: number; unit: string; total_cost: number }[]
+      {
+        id: string;
+        description: string;
+        quantity: number;
+        unit: string;
+        total_cost: number;
+      }[]
     >`
       SELECT id, description, quantity, unit, total_cost
       FROM purchases
@@ -315,7 +324,7 @@ export async function fetchPurchasesForSelect() {
     `;
     return purchases;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch purchases.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch purchases.");
   }
 }

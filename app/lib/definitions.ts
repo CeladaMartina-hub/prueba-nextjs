@@ -42,6 +42,10 @@ export type Product = {
   image_url: string;
   category_id: string;
   stock: number;
+  cost: number | null;
+  purchase_id: string | null;
+  portion_size: number | null;
+  portion_unit: string | null;
 };
 
 export type ProductState = {

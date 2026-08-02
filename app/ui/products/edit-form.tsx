@@ -1,27 +1,42 @@
-'use client';
+"use client";
 
-import { useActionState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Category, Product, ProductState } from '@/app/lib/definitions';
-import { updateProduct } from '@/app/lib/actions';
+import { useActionState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Category, Product, ProductState } from "@/app/lib/definitions";
+import { updateProduct } from "@/app/lib/actions";
+import CostCalculator from "@/app/ui/products/cost-calculator";
 
 export default function EditForm({
   product,
   categories,
+  purchases,
 }: {
   product: Product;
   categories: Category[];
+  purchases: {
+    id: string;
+    description: string;
+    quantity: number;
+    unit: string;
+    total_cost: number;
+  }[];
 }) {
   const initialState: ProductState = { message: null, errors: {} };
-  const updateProductWithId = updateProduct.bind(null, product.id, product.image_url);
+  const updateProductWithId = updateProduct.bind(
+    null,
+    product.id,
+    product.image_url,
+  );
   const [state, formAction] = useActionState(updateProductWithId, initialState);
 
   return (
     <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         <div className="mb-4">
-          <label htmlFor="name" className="mb-2 block text-sm font-medium">Nombre</label>
+          <label htmlFor="name" className="mb-2 block text-sm font-medium">
+            Nombre
+          </label>
           <input
             id="name"
             name="name"
@@ -35,7 +50,12 @@ export default function EditForm({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="description" className="mb-2 block text-sm font-medium">Descripción</label>
+          <label
+            htmlFor="description"
+            className="mb-2 block text-sm font-medium"
+          >
+            Descripción
+          </label>
           <textarea
             id="description"
             name="description"
@@ -45,23 +65,19 @@ export default function EditForm({
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="price" className="mb-2 block text-sm font-medium">Precio</label>
-          <input
-            id="price"
-            name="price"
-            type="number"
-            step="1"
-            defaultValue={product.price}
-            className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
-          />
-          {state.errors?.price && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.price[0]}</p>
-          )}
-        </div>
+        <CostCalculator
+          purchases={purchases}
+          defaultPurchaseId={product.purchase_id ?? undefined}
+          defaultPortionSize={product.portion_size ?? undefined}
+          defaultPortionUnit={product.portion_unit ?? undefined}
+          defaultCost={product.cost ?? undefined}
+          defaultPrice={product.price}
+        />
 
         <div className="mb-4">
-          <label htmlFor="stock" className="mb-2 block text-sm font-medium">Stock</label>
+          <label htmlFor="stock" className="mb-2 block text-sm font-medium">
+            Stock
+          </label>
           <input
             id="stock"
             name="stock"
@@ -72,7 +88,12 @@ export default function EditForm({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="category_id" className="mb-2 block text-sm font-medium">Categoría</label>
+          <label
+            htmlFor="category_id"
+            className="mb-2 block text-sm font-medium"
+          >
+            Categoría
+          </label>
           <select
             id="category_id"
             name="category_id"
@@ -87,7 +108,9 @@ export default function EditForm({
             ))}
           </select>
           {state.errors?.category_id && (
-            <p className="mt-1 text-sm text-red-500">{state.errors.category_id[0]}</p>
+            <p className="mt-1 text-sm text-red-500">
+              {state.errors.category_id[0]}
+            </p>
           )}
         </div>
 
@@ -115,7 +138,9 @@ export default function EditForm({
           />
         </div>
 
-        {state.message && <p className="mt-2 text-sm text-red-500">{state.message}</p>}
+        {state.message && (
+          <p className="mt-2 text-sm text-red-500">{state.message}</p>
+        )}
       </div>
 
       <div className="mt-6 flex justify-end gap-4">
