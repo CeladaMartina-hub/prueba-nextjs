@@ -504,3 +504,57 @@ export async function createSale(prevState: SaleState, formData: FormData) {
   revalidatePath("/dashboard/products");
   redirect("/dashboard/sales");
 }
+
+
+//comprado
+const PurchaseSchema = z.object({
+  purchase_date: z.string().min(1, 'La fecha es obligatoria.'),
+  supplier: z.string().optional(),
+  description: z.string().min(1, 'La descripción es obligatoria.'),
+  quantity: z.coerce.number().gt(0, 'La cantidad debe ser mayor a 0.'),
+  unit: z.enum(['kg', 'g', 'unit']),
+  total_cost: z.coerce.number().gt(0, 'El costo debe ser mayor a 0.'),
+});
+
+export type PurchaseState = {
+  errors?: {
+    purchase_date?: string[];
+    description?: string[];
+    quantity?: string[];
+    total_cost?: string[];
+  };
+  message?: string | null;
+};
+
+export async function createPurchase(prevState: PurchaseState, formData: FormData) {
+  const validatedFields = PurchaseSchema.safeParse({
+    purchase_date: formData.get('purchase_date'),
+    supplier: formData.get('supplier'),
+    description: formData.get('description'),
+    quantity: formData.get('quantity'),
+    unit: formData.get('unit'),
+    total_cost: formData.get('total_cost'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Faltan campos. No se pudo registrar la compra.',
+    };
+  }
+
+  const { purchase_date, supplier, description, quantity, unit, total_cost } =
+    validatedFields.data;
+
+  try {
+    await sql`
+      INSERT INTO purchases (purchase_date, supplier, description, quantity, unit, total_cost)
+      VALUES (${purchase_date}, ${supplier || null}, ${description}, ${quantity}, ${unit}, ${total_cost})
+    `;
+  } catch (error) {
+    return { message: 'Database Error: No se pudo registrar la compra.' };
+  }
+
+  revalidatePath('/dashboard/purchases');
+  redirect('/dashboard/purchases');
+}

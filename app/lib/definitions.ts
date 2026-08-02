@@ -99,3 +99,15 @@ export type SaleWithItems = Sale & {
     unit_price: number;
   }[];
 };
+
+//comprado
+
+export type Purchase = {
+  id: string;
+  purchase_date: string;
+  supplier: string | null;
+  description: string;
+  quantity: number;
+  unit: string;
+  total_cost: number;
+};

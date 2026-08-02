@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { Customer, Product, Sale } from "./definitions";
+import { Customer, Product, Purchase, Sale } from "./definitions";
 import { Category } from "./definitions";
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
@@ -276,5 +276,30 @@ export async function fetchCategoriesWithImage() {
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch categories.');
+  }
+}
+
+//comprado
+export async function fetchPurchases() {
+  try {
+    const purchases = await sql<Purchase[]>`
+      SELECT * FROM purchases ORDER BY purchase_date DESC
+    `;
+    return purchases;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch purchases.');
+  }
+}
+
+export async function fetchPurchaseById(id: string) {
+  try {
+    const data = await sql<Purchase[]>`
+      SELECT * FROM purchases WHERE id = ${id}
+    `;
+    return data[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch purchase.');
   }
 }

@@ -41,6 +41,12 @@ const cards = [
     icon: DocumentDuplicateIcon,
     color: 'bg-rose-50 text-rose-600',
   },
+   {
+    name: 'Gastos',
+    href: '/dashboard/purchases',
+    icon: DocumentDuplicateIcon,
+    color: 'bg-rose-50 text-rose-600',
+  },
 ];
 
 export default async function Page() {
