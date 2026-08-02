@@ -581,62 +581,115 @@ const KitItemSchema = z.object({
 });
 
 const KitSchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio.'),
+  name: z.string().min(1, "El nombre es obligatorio."),
   description: z.string().optional(),
-  price: z.coerce.number().gt(0, 'El precio debe ser mayor a 0.'),
+  price: z.coerce.number().gt(0, "El precio debe ser mayor a 0."),
   cost: z.coerce.number().gte(0),
-  items: z.array(KitItemSchema).min(1, 'Agregá al menos un producto al kit.'),
+  items: z.array(KitItemSchema).min(1, "Agregá al menos un producto al kit."),
 });
 
 export type KitState = {
   message?: string | null;
 };
 
+function convertUnits(value: number, from: string, to: string) {
+  if (from === to) return value;
+  if (from === "kg" && to === "g") return value * 1000;
+  if (from === "g" && to === "kg") return value / 1000;
+  return value;
+}
+
+const KitSchemaExtended = KitSchema.extend({
+  build_quantity: z.coerce
+    .number()
+    .int()
+    .gt(0, "Indicá cuántos kits vas a armar."),
+});
+
 export async function createKit(prevState: KitState, formData: FormData) {
-  const itemsRaw = formData.get('items') as string;
+  const itemsRaw = formData.get("items") as string;
 
   let items;
   try {
     items = JSON.parse(itemsRaw);
   } catch {
-    return { message: 'Error al leer los productos del kit.' };
+    return { message: "Error al leer los productos del kit." };
   }
 
-  const validatedFields = KitSchema.safeParse({
-    name: formData.get('name'),
-    description: formData.get('description'),
-    price: formData.get('price'),
-    cost: formData.get('cost'),
+  const validatedFields = KitSchemaExtended.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+    price: formData.get("price"),
+    cost: formData.get("cost"),
+    build_quantity: formData.get("build_quantity"),
     items,
   });
 
   if (!validatedFields.success) {
-    return { message: 'Faltan datos. Revisá el nombre, precio y los productos agregados.' };
+    return {
+      message:
+        "Faltan datos. Revisá nombre, precio, cantidad y los productos agregados.",
+    };
   }
 
-  const { name, description, price, cost, items: kitItems } = validatedFields.data;
+  const {
+    name,
+    description,
+    price,
+    cost,
+    build_quantity,
+    items: kitItems,
+  } = validatedFields.data;
 
-  const imageFile = formData.get('image') as File;
+  const imageFile = formData.get("image") as File;
   if (!imageFile || imageFile.size === 0) {
-    return { message: 'La foto del kit es obligatoria.' };
+    return { message: "La foto del kit es obligatoria." };
+  }
+
+  // Validamos stock disponible de cada producto antes de confirmar
+  const deductions: { product_id: string; units: number }[] = [];
+  for (const item of kitItems) {
+    const productData = await sql`
+      SELECT stock, portion_size, portion_unit FROM products WHERE id = ${item.product_id}
+    `;
+    const product = productData[0];
+    if (!product) {
+      return { message: `No se encontró el producto "${item.product_name}".` };
+    }
+
+    const qtyInPortionUnit = convertUnits(
+      item.quantity,
+      item.unit,
+      product.portion_unit,
+    );
+    const unitsNeededPerKit = qtyInPortionUnit / product.portion_size;
+    const totalUnitsNeeded = Math.round(unitsNeededPerKit * build_quantity);
+
+    if (product.stock < totalUnitsNeeded) {
+      return {
+        message: `Stock insuficiente de "${item.product_name}" para armar ${build_quantity} kit(s) (necesitás ${totalUnitsNeeded}, hay ${product.stock}).`,
+      };
+    }
+
+    deductions.push({ product_id: item.product_id, units: totalUnitsNeeded });
   }
 
   let imageUrl: string;
   try {
     const blob = await put(imageFile.name, imageFile, {
-      access: 'public',
+      access: "public",
       addRandomSuffix: true,
     });
     imageUrl = blob.url;
   } catch (error) {
-    return { message: 'Error al subir la imagen.' };
+    return { message: "Error al subir la imagen." };
   }
 
   try {
     await sql.begin(async (sql) => {
       const [kit] = await sql`
-        INSERT INTO kits (name, description, image_url, price, cost)
-        VALUES (${name}, ${description ?? null}, ${imageUrl}, ${price}, ${cost})
+        INSERT INTO kits (name, description, image_url, price, cost, stock)
+        VALUES (${name}, ${description ?? null}, ${imageUrl}, ${price}, ${cost}, ${build_quantity})
         RETURNING id
       `;
 
@@ -646,20 +699,52 @@ export async function createKit(prevState: KitState, formData: FormData) {
           VALUES (${kit.id}, ${item.product_id}, ${item.product_name}, ${item.quantity}, ${item.unit}, ${item.item_cost})
         `;
       }
+
+      for (const d of deductions) {
+        await sql`UPDATE products SET stock = stock - ${d.units} WHERE id = ${d.product_id}`;
+      }
     });
   } catch (error) {
-    console.error('Error creando kit:', error);
-    return { message: 'Database Error: No se pudo crear el kit.' };
+    console.error("Error creando kit:", error);
+    return { message: "Database Error: No se pudo crear el kit." };
   }
 
-  revalidatePath('/dashboard/kits');
-  redirect('/dashboard/kits');
+  revalidatePath("/dashboard/kits");
+  revalidatePath("/dashboard/products");
+  redirect("/dashboard/kits");
 }
 
 export async function deleteKit(id: string) {
   try {
-    await sql`DELETE FROM kits WHERE id = ${id}`;
+    await sql.begin(async (sql) => {
+      const items = await sql`
+        SELECT product_id, quantity, unit FROM kit_items WHERE kit_id = ${id}
+      `;
+
+      const kitData = await sql`SELECT stock FROM kits WHERE id = ${id}`;
+      const kitStock = kitData[0]?.stock ?? 0;
+
+      for (const item of items) {
+        const productData = await sql`
+          SELECT portion_size, portion_unit FROM products WHERE id = ${item.product_id}
+        `;
+        const product = productData[0];
+        if (!product) continue;
+
+        const qtyInPortionUnit = convertUnits(Number(item.quantity), item.unit, product.portion_unit);
+        const unitsPerKit = qtyInPortionUnit / product.portion_size;
+        const totalUnitsToRestore = Math.round(unitsPerKit * kitStock);
+
+        await sql`
+          UPDATE products SET stock = stock + ${totalUnitsToRestore} WHERE id = ${item.product_id}
+        `;
+      }
+
+      await sql`DELETE FROM kits WHERE id = ${id}`;
+    });
+
     revalidatePath('/dashboard/kits');
+    revalidatePath('/dashboard/products');
   } catch (error) {
     console.error(error);
     throw new Error('Database Error: No se pudo eliminar el kit.');
@@ -672,40 +757,49 @@ export async function updateKit(
   prevState: KitState,
   formData: FormData,
 ) {
-  const itemsRaw = formData.get('items') as string;
+  const itemsRaw = formData.get("items") as string;
 
   let items;
   try {
     items = JSON.parse(itemsRaw);
   } catch {
-    return { message: 'Error al leer los productos del kit.' };
+    return { message: "Error al leer los productos del kit." };
   }
 
   const validatedFields = KitSchema.safeParse({
-    name: formData.get('name'),
-    description: formData.get('description'),
-    price: formData.get('price'),
-    cost: formData.get('cost'),
+    name: formData.get("name"),
+    description: formData.get("description"),
+    price: formData.get("price"),
+    cost: formData.get("cost"),
     items,
   });
 
   if (!validatedFields.success) {
-    return { message: 'Faltan datos. Revisá el nombre, precio y los productos agregados.' };
+    return {
+      message:
+        "Faltan datos. Revisá el nombre, precio y los productos agregados.",
+    };
   }
 
-  const { name, description, price, cost, items: kitItems } = validatedFields.data;
+  const {
+    name,
+    description,
+    price,
+    cost,
+    items: kitItems,
+  } = validatedFields.data;
 
   let imageUrl = currentImageUrl;
-  const imageFile = formData.get('image') as File;
+  const imageFile = formData.get("image") as File;
   if (imageFile && imageFile.size > 0) {
     try {
       const blob = await put(imageFile.name, imageFile, {
-        access: 'public',
+        access: "public",
         addRandomSuffix: true,
       });
       imageUrl = blob.url;
     } catch (error) {
-      return { message: 'Error al subir la imagen.' };
+      return { message: "Error al subir la imagen." };
     }
   }
 
@@ -728,10 +822,10 @@ export async function updateKit(
       }
     });
   } catch (error) {
-    console.error('Error actualizando kit:', error);
-    return { message: 'Database Error: No se pudo actualizar el kit.' };
+    console.error("Error actualizando kit:", error);
+    return { message: "Database Error: No se pudo actualizar el kit." };
   }
 
-  revalidatePath('/dashboard/kits');
+  revalidatePath("/dashboard/kits");
   redirect(`/dashboard/kits/${id}`);
 }

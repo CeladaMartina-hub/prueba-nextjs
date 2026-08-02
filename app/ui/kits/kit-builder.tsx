@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useActionState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { KitState } from '@/app/lib/actions';
+import { useState, useActionState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { KitState } from "@/app/lib/actions";
 
 type ProductOption = {
   id: string;
@@ -27,13 +27,19 @@ type ExistingKit = {
   description: string | null;
   image_url: string;
   price: number;
-  items: { product_id: string; product_name: string; quantity: number; unit: string; item_cost: number }[];
+  items: {
+    product_id: string;
+    product_name: string;
+    quantity: number;
+    unit: string;
+    item_cost: number;
+  }[];
 };
 
 function convert(value: number, from: string, to: string) {
   if (from === to) return value;
-  if (from === 'kg' && to === 'g') return value * 1000;
-  if (from === 'g' && to === 'kg') return value / 1000;
+  if (from === "kg" && to === "g") return value * 1000;
+  if (from === "g" && to === "kg") return value / 1000;
   return value;
 }
 
@@ -49,22 +55,23 @@ export default function KitBuilder({
   const initialState: KitState = { message: null };
   const [state, formAction] = useActionState(action, initialState);
 
-  const [name, setName] = useState(kit?.name ?? '');
-  const [description, setDescription] = useState(kit?.description ?? '');
-  const [price, setPrice] = useState(kit?.price?.toString() ?? '');
+  const [name, setName] = useState(kit?.name ?? "");
+  const [description, setDescription] = useState(kit?.description ?? "");
+  const [price, setPrice] = useState(kit?.price?.toString() ?? "");
 
   const [lines, setLines] = useState<KitLine[]>(kit?.items ?? []);
-  const [productToAdd, setProductToAdd] = useState('');
-  const [quantityToAdd, setQuantityToAdd] = useState('');
-  const [unitToAdd, setUnitToAdd] = useState('g');
+  const [productToAdd, setProductToAdd] = useState("");
+  const [quantityToAdd, setQuantityToAdd] = useState("");
+  const [unitToAdd, setUnitToAdd] = useState("g");
 
   function addLine() {
     const product = products.find((p) => p.id === productToAdd);
-    if (!product || !quantityToAdd || !product.cost || !product.portion_size) return;
+    if (!product || !quantityToAdd || !product.cost || !product.portion_size)
+      return;
     if (lines.some((l) => l.product_id === product.id)) return;
 
     const qty = Number(quantityToAdd);
-    const portionUnit = product.portion_unit ?? 'g';
+    const portionUnit = product.portion_unit ?? "g";
     const qtyInPortionUnit = convert(qty, unitToAdd, portionUnit);
     const costPerPortionUnit = product.cost / product.portion_size;
     const itemCost = Math.round(costPerPortionUnit * qtyInPortionUnit);
@@ -79,8 +86,8 @@ export default function KitBuilder({
         item_cost: itemCost,
       },
     ]);
-    setProductToAdd('');
-    setQuantityToAdd('');
+    setProductToAdd("");
+    setQuantityToAdd("");
   }
 
   function removeLine(productId: string) {
@@ -99,7 +106,9 @@ export default function KitBuilder({
 
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium">Nombre del kit</label>
+          <label className="mb-2 block text-sm font-medium">
+            Nombre del kit
+          </label>
           <input
             name="name"
             type="text"
@@ -115,7 +124,7 @@ export default function KitBuilder({
           <textarea
             name="description"
             rows={3}
-            value={description ?? ''}
+            value={description ?? ""}
             onChange={(e) => setDescription(e.target.value)}
             className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
           />
@@ -123,7 +132,9 @@ export default function KitBuilder({
 
         {kit?.image_url && (
           <div className="mb-4">
-            <label className="mb-2 block text-sm font-medium">Foto actual</label>
+            <label className="mb-2 block text-sm font-medium">
+              Foto actual
+            </label>
             <Image
               src={kit.image_url}
               alt={kit.name}
@@ -134,15 +145,37 @@ export default function KitBuilder({
           </div>
         )}
 
+        {!kit && (
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium">
+              ¿Cuántos kits vas a armar?
+            </label>
+            <input
+              name="build_quantity"
+              type="number"
+              min={1}
+              defaultValue={1}
+              className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
+            />
+          </div>
+        )}
+
         <div className="mb-4">
           <label className="mb-2 block text-sm font-medium">
-            {kit ? 'Reemplazar foto (opcional)' : 'Foto del kit'}
+            {kit ? "Reemplazar foto (opcional)" : "Foto del kit"}
           </label>
-          <input name="image" type="file" accept="image/*" className="block w-full text-sm" />
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            className="block w-full text-sm"
+          />
         </div>
 
         <div className="mb-4 border-t pt-4">
-          <label className="mb-2 block text-sm font-medium">Agregar producto al kit</label>
+          <label className="mb-2 block text-sm font-medium">
+            Agregar producto al kit
+          </label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
             <select
               value={productToAdd}
@@ -196,10 +229,17 @@ export default function KitBuilder({
               </thead>
               <tbody>
                 {lines.map((line) => (
-                  <tr key={line.product_id} className="border-b last:border-none">
+                  <tr
+                    key={line.product_id}
+                    className="border-b last:border-none"
+                  >
                     <td className="px-3 py-2">{line.product_name}</td>
-                    <td className="px-3 py-2">{line.quantity} {line.unit}</td>
-                    <td className="px-3 py-2">${line.item_cost.toLocaleString('es-AR')}</td>
+                    <td className="px-3 py-2">
+                      {line.quantity} {line.unit}
+                    </td>
+                    <td className="px-3 py-2">
+                      ${line.item_cost.toLocaleString("es-AR")}
+                    </td>
                     <td className="px-3 py-2">
                       <button
                         type="button"
@@ -218,13 +258,17 @@ export default function KitBuilder({
 
         <div className="mb-3 grid grid-cols-2 gap-3 border-t pt-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Costo total del kit</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">
+              Costo total del kit
+            </label>
             <div className="rounded-md bg-white px-3 py-2 text-sm font-medium">
-              ${totalCost.toLocaleString('es-AR')}
+              ${totalCost.toLocaleString("es-AR")}
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Precio de venta</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">
+              Precio de venta
+            </label>
             <input
               name="price"
               type="number"
@@ -239,17 +283,28 @@ export default function KitBuilder({
         {totalCost > 0 && finalPrice > 0 && (
           <div
             className={`rounded-md p-3 text-sm ${
-              profit > 0 ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+              profit > 0
+                ? "bg-green-50 text-green-800"
+                : "bg-red-50 text-red-800"
             }`}
           >
-            Ganancia: <span className="font-semibold">${profit.toLocaleString('es-AR')}</span>
+            Ganancia:{" "}
+            <span className="font-semibold">
+              ${profit.toLocaleString("es-AR")}
+            </span>
             {marginPercent !== null && (
-              <span> ({marginPercent >= 0 ? '+' : ''}{marginPercent.toFixed(0)}% sobre el costo)</span>
+              <span>
+                {" "}
+                ({marginPercent >= 0 ? "+" : ""}
+                {marginPercent.toFixed(0)}% sobre el costo)
+              </span>
             )}
           </div>
         )}
 
-        {state.message && <p className="mt-2 text-sm text-red-500">{state.message}</p>}
+        {state.message && (
+          <p className="mt-2 text-sm text-red-500">{state.message}</p>
+        )}
       </div>
 
       <div className="mt-6 flex justify-end gap-4">
@@ -264,7 +319,7 @@ export default function KitBuilder({
           disabled={lines.length === 0}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
         >
-          {kit ? 'Guardar cambios' : 'Crear kit'}
+          {kit ? "Guardar cambios" : "Crear kit"}
         </button>
       </div>
     </form>
