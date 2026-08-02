@@ -366,3 +366,28 @@ export async function fetchKits() {
     throw new Error('Failed to fetch kits.');
   }
 }
+
+export async function fetchKitById(id: string) {
+  try {
+    const kitData = await sql<
+      { id: string; name: string; description: string | null; image_url: string; price: number; cost: number }[]
+    >`
+      SELECT id, name, description, image_url, price, cost FROM kits WHERE id = ${id}
+    `;
+
+    if (!kitData[0]) return undefined;
+
+    const items = await sql<
+      { product_id: string; product_name: string; quantity: number; unit: string; item_cost: number }[]
+    >`
+      SELECT product_id, product_name, quantity, unit, item_cost
+      FROM kit_items
+      WHERE kit_id = ${id}
+    `;
+
+    return { ...kitData[0], items };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch kit.');
+  }
+}

@@ -25,7 +25,7 @@ export default async function Page() {
         {kits.map((kit) => {
           const profit = kit.price - kit.cost;
           return (
-            <div key={kit.id} className="overflow-hidden rounded-xl border">
+           <Link key={kit.id} href={`/dashboard/kits/${kit.id}`} className="overflow-hidden rounded-xl border hover:shadow-md">
               <div className="relative aspect-square bg-gray-100">
                 <Image src={kit.image_url} alt={kit.name} fill className="object-cover" />
               </div>
@@ -38,7 +38,7 @@ export default async function Page() {
                   Costo: ${kit.cost.toLocaleString('es-AR')} · Ganancia: ${profit.toLocaleString('es-AR')}
                 </p>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

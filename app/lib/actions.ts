@@ -655,3 +655,13 @@ export async function createKit(prevState: KitState, formData: FormData) {
   revalidatePath('/dashboard/kits');
   redirect('/dashboard/kits');
 }
+
+export async function deleteKit(id: string) {
+  try {
+    await sql`DELETE FROM kits WHERE id = ${id}`;
+    revalidatePath('/dashboard/kits');
+  } catch (error) {
+    console.error(error);
+    throw new Error('Database Error: No se pudo eliminar el kit.');
+  }
+}
