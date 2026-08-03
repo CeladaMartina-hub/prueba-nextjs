@@ -1,20 +1,25 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useState } from "react";
+import Link from "next/link";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { usePathname } from "next/navigation";
 
 const links = [
-  { name: 'Inicio', href: '/' },
-  { name: 'Productos', href: '/products' }
+  { name: "Inicio", href: "/" },
+  { name: "Productos", href: "/products" },
 ];
 
 export default function MobileMenu({
   authLink,
+  isLoggedIn,
 }: {
   authLink: { name: string; href: string };
+  isLoggedIn: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const showAuthLink = !(isLoggedIn && pathname.startsWith("/dashboard"));
 
   return (
     <div className="md:hidden">
@@ -38,13 +43,15 @@ export default function MobileMenu({
               {link.name}
             </Link>
           ))}
-          <Link
-            href={authLink.href}
-            onClick={() => setIsOpen(false)}
-            className="rounded-md p-2 hover:bg-gray-100"
-          >
-            {authLink.name}
-          </Link>
+          {showAuthLink && (
+            <Link
+              href={authLink.href}
+              onClick={() => setIsOpen(false)}
+              className="rounded-md p-2 hover:bg-gray-100"
+            >
+              {authLink.name}
+            </Link>
+          )}
         </div>
       )}
     </div>

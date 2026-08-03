@@ -11,24 +11,68 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { GiftIcon } from "lucide-react";
 
 // Map of links to display in the side navigation.
 // Depending on the size of the application, this would be stored in a database.
 const links = [
-  { name: "Home", href: "/dashboard", icon: HomeIcon },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: HomeIcon,
+    color: "bg-blue-50 text-blue-600",
+  },
   {
     name: "Productos",
     href: "/dashboard/products",
     icon: StarIcon,
+    color: "bg-blue-50 text-blue-600",
   },
-  { name: "Clientes", href: "/dashboard/customers", icon: UserGroupIcon },
-  { name: "Categorías", href: "/dashboard/categories", icon: Square2StackIcon },
-  { name: "Ventas", href: "/dashboard/sales", icon: ShoppingCartIcon },
-  { name: "Reportes", href: "/dashboard/reports", icon: DocumentDuplicateIcon }
+   {
+    name: "Kits",
+    href: "/dashboard/kits",
+    icon: GiftIcon,
+    color: "bg-rose-50 text-rose-600",
+  },
+  {
+    name: "Clientes",
+    href: "/dashboard/customers",
+    icon: UserGroupIcon,
+    color: "bg-purple-50 text-purple-600",
+  },
+  {
+    name: "Categorías",
+    href: "/dashboard/categories",
+    icon: Square2StackIcon,
+    color: "bg-amber-50 text-amber-600",
+  },
+  {
+    name: "Ventas",
+    href: "/dashboard/sales",
+    icon: ShoppingCartIcon,
+    color: "bg-green-50 text-green-600",
+  },
+  {
+    name: "Reportes",
+    href: "/dashboard/reports",
+    icon: DocumentDuplicateIcon,
+    color: "bg-rose-50 text-rose-600",
+  },
+  {
+    name: "Gastos",
+    href: "/dashboard/purchases",
+    icon: DocumentDuplicateIcon,
+    color: "bg-rose-50 text-rose-600",
+  } 
 ];
 
 export default function NavLinks() {
   const pathname = usePathname();
+
+  if (pathname === "/dashboard") {
+    return null;
+  }
+
   return (
     <>
       {links.map((link) => {
