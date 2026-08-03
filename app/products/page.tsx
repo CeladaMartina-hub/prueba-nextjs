@@ -1,10 +1,18 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { fetchAllProducts } from '@/app/lib/data';
-import { formatPrice } from '@/app/lib/utils';
+import Link from "next/link";
+import Image from "next/image";
+import { fetchAllProducts, fetchProductByCategoryId } from "@/app/lib/data";
+import { formatPrice } from "@/app/lib/utils";
 
-export default async function ProductsPage() {
-  const products = await fetchAllProducts();
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category } = await searchParams;
+
+  const products = category
+    ? await fetchProductByCategoryId(category)
+    : await fetchAllProducts();
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
@@ -36,7 +44,9 @@ export default async function ProductsPage() {
       </div>
 
       {products.length === 0 && (
-        <p className="mt-8 text-center text-gray-500">Todavía no hay productos cargados.</p>
+        <p className="mt-8 text-center text-gray-500">
+          Todavía no hay productos cargados.
+        </p>
       )}
     </div>
   );

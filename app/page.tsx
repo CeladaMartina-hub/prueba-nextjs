@@ -52,7 +52,7 @@ export default async function HomePage() {
                     src={category.image_url}
                     alt={category.name}
                     fill
-                    className="object-cover transition group-hover:scale-105"
+                    className="object-cover transition group-hover:scale-105"                    
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-green-50 text-green-700">

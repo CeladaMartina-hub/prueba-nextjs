@@ -6,8 +6,7 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const links = [
   { name: 'Inicio', href: '/' },
-  { name: 'Productos', href: '/products' },
-  { name: 'Contacto', href: '/contact' },
+  { name: 'Productos', href: '/products' }
 ];
 
 export default function MobileMenu({

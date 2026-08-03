@@ -282,6 +282,28 @@ export async function fetchCategoriesWithImage() {
   }
 }
 
+export async function fetchProductByCategoryId(categoryId: string) {
+  try {
+    const products = await sql<(Product & { category_name: string })[]>`
+      SELECT
+        products.id,
+        products.name,
+        products.price,
+        products.image_url,
+        categories.name AS category_name
+      FROM products
+      JOIN categories
+        ON products.category_id = categories.id
+      WHERE products.category_id = ${categoryId}
+      ORDER BY products.created_at DESC
+    `;
+
+    return products;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch products by category.");
+  }
+}
 //comprado
 export async function fetchPurchases() {
   try {
@@ -350,29 +372,42 @@ export async function fetchProductsForKit() {
     `;
     return products;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch products.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch products.");
   }
 }
 
 export async function fetchKits() {
   try {
     const kits = await sql<
-      { id: string; name: string; image_url: string; price: number; cost: number }[]
+      {
+        id: string;
+        name: string;
+        image_url: string;
+        price: number;
+        cost: number;
+      }[]
     >`
       SELECT id, name, image_url, price, cost FROM kits ORDER BY created_at DESC
     `;
     return kits;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch kits.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch kits.");
   }
 }
 
 export async function fetchKitById(id: string) {
   try {
     const kitData = await sql<
-      { id: string; name: string; description: string | null; image_url: string; price: number; cost: number }[]
+      {
+        id: string;
+        name: string;
+        description: string | null;
+        image_url: string;
+        price: number;
+        cost: number;
+      }[]
     >`
       SELECT id, name, description, image_url, price, cost FROM kits WHERE id = ${id}
     `;
@@ -380,7 +415,13 @@ export async function fetchKitById(id: string) {
     if (!kitData[0]) return undefined;
 
     const items = await sql<
-      { product_id: string; product_name: string; quantity: number; unit: string; item_cost: number }[]
+      {
+        product_id: string;
+        product_name: string;
+        quantity: number;
+        unit: string;
+        item_cost: number;
+      }[]
     >`
       SELECT product_id, product_name, quantity, unit, item_cost
       FROM kit_items
@@ -389,27 +430,35 @@ export async function fetchKitById(id: string) {
 
     return { ...kitData[0], items };
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch kit.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch kit.");
   }
 }
 
 export async function fetchKitsForSale() {
   try {
-    const kits = await sql<{ id: string; name: string; price: number; stock: number }[]>`
+    const kits = await sql<
+      { id: string; name: string; price: number; stock: number }[]
+    >`
       SELECT id, name, price, stock FROM kits WHERE stock > 0 ORDER BY name ASC
     `;
     return kits;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch kits.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch kits.");
   }
 }
 
 export async function fetchPublicKits() {
   try {
     const kits = await sql<
-      { id: string; name: string; image_url: string; price: number; stock: number }[]
+      {
+        id: string;
+        name: string;
+        image_url: string;
+        price: number;
+        stock: number;
+      }[]
     >`
       SELECT id, name, image_url, price, stock
       FROM kits
@@ -418,7 +467,7 @@ export async function fetchPublicKits() {
     `;
     return kits;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch kits.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch kits.");
   }
 }
