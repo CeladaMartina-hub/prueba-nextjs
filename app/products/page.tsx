@@ -17,7 +17,7 @@ export default async function ProductsPage({
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-semibold">Productos</h1>
-
+      
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {products.map((product) => (
           <Link
