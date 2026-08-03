@@ -32,7 +32,7 @@ export default function MobileMenu({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-16 flex flex-col gap-1 border-t bg-white p-4 shadow-md">
+         <div className="absolute left-0 right-0 top-16 z-50 flex flex-col gap-1 border-t bg-white p-4 shadow-md">
           {links.map((link) => (
             <Link
               key={link.href}

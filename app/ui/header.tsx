@@ -18,7 +18,7 @@ export default async function Header() {
     : { name: "Iniciar sesión", href: "/login" };
 
   return (
-    <header className="relative flex items-center justify-between border-b px-4 py-4 md:px-8">
+    <header className="relative z-50 flex items-center justify-between border-b px-4 py-4 md:px-8">
       <Link href="/" className="text-lg font-semibold">
         Mi Tienda
       </Link>
