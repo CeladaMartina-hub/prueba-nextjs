@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
 type PurchaseOption = {
   id: string;
@@ -25,11 +25,14 @@ export default function CostCalculator({
   defaultCost?: number;
   defaultPrice?: number;
 }) {
-  const [purchaseId, setPurchaseId] = useState(defaultPurchaseId ?? '');
-  const [portionSize, setPortionSize] = useState(defaultPortionSize?.toString() ?? '');
-  const [portionUnit, setPortionUnit] = useState(defaultPortionUnit ?? 'g');
-  const [manualCost, setManualCost] = useState(defaultCost?.toString() ?? '');
-  const [price, setPrice] = useState(defaultPrice?.toString() ?? '');
+  const [purchaseId, setPurchaseId] = useState(defaultPurchaseId ?? "");
+  const [portionSize, setPortionSize] = useState(
+    defaultPortionSize?.toString() ?? "",
+  );
+  const [portionUnit, setPortionUnit] = useState(defaultPortionUnit ?? "g");
+  const [manualCost, setManualCost] = useState(defaultCost?.toString() ?? "");
+  const [price, setPrice] = useState(defaultPrice?.toString() ?? "");
+  const [priceTouched, setPriceTouched] = useState(false);
 
   const selectedPurchase = purchases.find((p) => p.id === purchaseId);
 
@@ -40,9 +43,9 @@ export default function CostCalculator({
     if (size <= 0) return null;
 
     let purchaseQtyInSameUnit = selectedPurchase.quantity;
-    if (selectedPurchase.unit === 'kg' && portionUnit === 'g') {
+    if (selectedPurchase.unit === "kg" && portionUnit === "g") {
       purchaseQtyInSameUnit = selectedPurchase.quantity * 1000;
-    } else if (selectedPurchase.unit === 'g' && portionUnit === 'kg') {
+    } else if (selectedPurchase.unit === "g" && portionUnit === "kg") {
       purchaseQtyInSameUnit = selectedPurchase.quantity / 1000;
     }
 
@@ -50,11 +53,16 @@ export default function CostCalculator({
     return Math.round(costPerUnit * size);
   }, [selectedPurchase, portionSize, portionUnit]);
 
-  const finalCost = calculatedCost !== null && !manualCost ? calculatedCost : Number(manualCost) || 0;
+  const finalCost =
+    calculatedCost !== null && !manualCost
+      ? calculatedCost
+      : Number(manualCost) || 0;
+  const suggestedPrice = finalCost > 0 ? Math.round(finalCost * 1.3) : 0;
   const finalPrice = Number(price) || 0;
 
   const profit = finalPrice - finalCost;
   const marginPercent = finalCost > 0 ? (profit / finalCost) * 100 : null;
+  const displayedPrice = !priceTouched && suggestedPrice > 0 ? suggestedPrice.toString() : price;
 
   return (
     <div className="mb-6 rounded-md border border-blue-100 bg-blue-50 p-4">
@@ -74,7 +82,8 @@ export default function CostCalculator({
           <option value="">No asociar / cargar costo manual</option>
           {purchases.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.description} — {p.quantity}{p.unit} por ${p.total_cost.toLocaleString('es-AR')}
+              {p.description} — {p.quantity}
+              {p.unit} por ${p.total_cost.toLocaleString("es-AR")}
             </option>
           ))}
         </select>
@@ -83,7 +92,9 @@ export default function CostCalculator({
       {purchaseId && (
         <div className="mb-3 grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Tamaño de la porción</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">
+              Tamaño de la porción
+            </label>
             <input
               type="number"
               step="0.01"
@@ -94,7 +105,9 @@ export default function CostCalculator({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Unidad</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">
+              Unidad
+            </label>
             <select
               value={portionUnit}
               onChange={(e) => setPortionUnit(e.target.value)}
@@ -111,42 +124,60 @@ export default function CostCalculator({
       <div className="mb-3 grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-600">
-            Costo {calculatedCost !== null && !manualCost ? '(calculado)' : ''}
+            Costo {calculatedCost !== null && !manualCost ? "(calculado)" : ""}
           </label>
           <input
             type="number"
             name="cost"
             step="1"
-            value={calculatedCost !== null && !manualCost ? calculatedCost : manualCost}
+            value={
+              calculatedCost !== null && !manualCost
+                ? calculatedCost
+                : manualCost
+            }
             onChange={(e) => setManualCost(e.target.value)}
             className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600">Precio de venta</label>
+          <label className="mb-1 block text-xs font-medium text-gray-600">
+            Precio de venta
+          </label>
           <input
             type="number"
             step="1"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            value={displayedPrice}
+            onChange={(e) => {
+              setPrice(e.target.value);
+              setPriceTouched(true);
+            }}
             className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
           />
           {/* Espejo hidden para que llegue con el name="price" que espera el form */}
-          <input type="hidden" name="price" value={price} />
+          <input type="hidden" name="price" value={displayedPrice} />
         </div>
       </div>
 
       {finalCost > 0 && finalPrice > 0 && (
         <div
           className={`rounded-md p-3 text-sm ${
-            profit > 0 ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+            profit > 0 ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
           }`}
         >
-          Ganancia: <span className="font-semibold">${profit.toLocaleString('es-AR')}</span>
+          Ganancia:{" "}
+          <span className="font-semibold">
+            ${profit.toLocaleString("es-AR")}
+          </span>
           {marginPercent !== null && (
-            <span> ({marginPercent >= 0 ? '+' : ''}{marginPercent.toFixed(0)}% sobre el costo)</span>
+            <span>
+              {" "}
+              ({marginPercent >= 0 ? "+" : ""}
+              {marginPercent.toFixed(0)}% sobre el costo)
+            </span>
           )}
-          {profit <= 0 && <span> — ¡Estás vendiendo a pérdida o sin margen!</span>}
+          {profit <= 0 && (
+            <span> — ¡Estás vendiendo a pérdida o sin margen!</span>
+          )}
         </div>
       )}
 
