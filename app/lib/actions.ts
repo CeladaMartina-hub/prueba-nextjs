@@ -527,15 +527,6 @@ export async function createSale(prevState: SaleState, formData: FormData) {
 }
 
 //comprado
-const PurchaseSchema = z.object({
-  purchase_date: z.string().min(1, "La fecha es obligatoria."),
-  supplier: z.string().optional(),
-  description: z.string().min(1, "La descripción es obligatoria."),
-  quantity: z.coerce.number().gt(0, "La cantidad debe ser mayor a 0."),
-  unit: z.enum(["kg", "g", "unit"]),
-  total_cost: z.coerce.number().gt(0, "El costo debe ser mayor a 0."),
-});
-
 export type PurchaseState = {
   errors?: {
     purchase_date?: string[];
@@ -546,17 +537,44 @@ export type PurchaseState = {
   message?: string | null;
 };
 
+const PurchaseWithProductSchema = z.object({
+  purchase_date: z.string().min(1, "La fecha es obligatoria."),
+  supplier: z.string().optional(),
+  description: z.string().min(1, "La descripción es obligatoria."),
+  quantity: z.coerce.number().gt(0, "La cantidad debe ser mayor a 0."),
+  unit: z.enum(["kg", "g", "unit"]),
+  total_cost: z.coerce.number().gt(0, "El costo debe ser mayor a 0."),
+  is_product: z.string().optional(),
+  product_name: z.string().optional(),
+  product_description: z.string().optional(),
+  product_stock: z.string().optional(),
+  product_category_id: z.string().optional(),
+  product_portion_size: z.string().optional(),
+  product_portion_unit: z.string().optional(),
+  product_cost: z.string().optional(),
+  product_price: z.string().optional(),
+});
+
 export async function createPurchase(
   prevState: PurchaseState,
   formData: FormData,
 ) {
-  const validatedFields = PurchaseSchema.safeParse({
+  const validatedFields = PurchaseWithProductSchema.safeParse({
     purchase_date: formData.get("purchase_date"),
     supplier: formData.get("supplier"),
     description: formData.get("description"),
     quantity: formData.get("quantity"),
     unit: formData.get("unit"),
     total_cost: formData.get("total_cost"),
+    is_product: formData.get("is_product"),
+    product_name: formData.get("product_name"),
+    product_description: formData.get("product_description"),
+    product_stock: formData.get("product_stock"),
+    product_category_id: formData.get("product_category_id"),
+    product_portion_size: formData.get("product_portion_size"),
+    product_portion_unit: formData.get("product_portion_unit"),
+    product_cost: formData.get("product_cost"),
+    product_price: formData.get("product_price"),
   });
 
   if (!validatedFields.success) {
@@ -566,19 +584,69 @@ export async function createPurchase(
     };
   }
 
-  const { purchase_date, supplier, description, quantity, unit, total_cost } =
-    validatedFields.data;
+  const data = validatedFields.data;
+  const createsProduct = data.is_product === "yes";
+
+  // Validaciones extra si se va a crear un producto también
+  if (createsProduct) {
+    if (!data.product_name) {
+      return { message: "El nombre del producto es obligatorio." };
+    }
+    if (!data.product_category_id) {
+      return { message: "Elegí una categoría para el producto." };
+    }
+  }
+
+  let imageUrl: string | null = null;
+  if (createsProduct) {
+    const imageFile = formData.get("product_image") as File;
+    if (imageFile && imageFile.size > 0) {
+      try {
+        const blob = await put(imageFile.name, imageFile, {
+          access: "public",
+          addRandomSuffix: true,
+        });
+        imageUrl = blob.url;
+      } catch (error) {
+        return { message: "Error al subir la imagen del producto." };
+      }
+    }
+  }
 
   try {
-    await sql`
-      INSERT INTO purchases (purchase_date, supplier, description, quantity, unit, total_cost)
-      VALUES (${purchase_date}, ${supplier || null}, ${description}, ${quantity}, ${unit}, ${total_cost})
-    `;
+    await sql.begin(async (sql) => {
+      const [purchase] = await sql`
+        INSERT INTO purchases (purchase_date, supplier, description, quantity, unit, total_cost)
+        VALUES (${data.purchase_date}, ${data.supplier || null}, ${data.description}, ${data.quantity}, ${data.unit}, ${data.total_cost})
+        RETURNING id
+      `;
+
+      if (createsProduct) {
+        await sql`
+        INSERT INTO products (
+          name, description, price, image_url, category_id, stock, cost, purchase_id, portion_size, portion_unit)
+      VALUES (
+    ${data.product_name ?? null},
+    ${data.product_description || null},
+    ${data.product_price ? Number(data.product_price) : 0},
+    ${imageUrl ?? "/placeholder-product.png"},
+    ${data.product_category_id ?? null},
+    ${data.product_stock ? Number(data.product_stock) : 0},
+    ${data.product_cost ? Number(data.product_cost) : null},
+    ${purchase.id},
+    ${data.product_portion_size ? Number(data.product_portion_size) : null},
+    ${data.product_portion_unit || null}
+  )
+`;
+      }
+    });
   } catch (error) {
+    console.error("Error creando compra/producto:", error);
     return { message: "Database Error: No se pudo registrar la compra." };
   }
 
   revalidatePath("/dashboard/purchases");
+  revalidatePath("/dashboard/products");
   redirect("/dashboard/purchases");
 }
 
@@ -732,11 +800,11 @@ export async function deleteKit(id: string) {
       await sql`DELETE FROM kits WHERE id = ${id}`;
     });
 
-    revalidatePath('/dashboard/kits');
-    revalidatePath('/dashboard/products');
+    revalidatePath("/dashboard/kits");
+    revalidatePath("/dashboard/products");
   } catch (error) {
     console.error(error);
-    throw new Error('Database Error: No se pudo eliminar el kit.');
+    throw new Error("Database Error: No se pudo eliminar el kit.");
   }
 }
 
