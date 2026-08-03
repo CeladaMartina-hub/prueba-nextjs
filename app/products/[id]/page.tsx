@@ -2,6 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { fetchProductById } from "@/app/lib/data";
 import { formatPrice } from "@/app/lib/utils";
+import Link from "next/dist/client/link";
 
 export default async function ProductDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -39,6 +40,15 @@ export default async function ProductDetailPage(props: {
             {formatPrice(product.price)}
           </p>
 
+          {product.description && (
+            <div className="mt-6 border-t pt-4">
+              <p className="mb-1 text-sm font-medium text-gray-600">
+                Descripción
+              </p>
+              <p className="text-sm leading-relaxed">{product.description}</p>
+            </div>
+          )}
+
           <a
             href={whatsappUrl}
             target="_blank"
@@ -48,14 +58,14 @@ export default async function ProductDetailPage(props: {
             Consultar por WhatsApp
           </a>
 
-          {product.description && (
-            <div className="mt-6 border-t pt-4">
-              <p className="mb-1 text-sm font-medium text-gray-600">
-                Descripción
-              </p>
-              <p className="text-sm leading-relaxed">{product.description}</p>
-            </div>
-          )}
+          <div className="mt-6">
+            <Link
+              href="/products"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              ← Volver a Productos
+            </Link>
+          </div>
         </div>
       </div>
     </div>

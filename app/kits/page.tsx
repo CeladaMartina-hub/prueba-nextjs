@@ -7,7 +7,7 @@ export default async function KitsPage() {
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Kits armados</h1>
+      <h1 className="mb-6 text-2xl font-semibold">Combos</h1>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {kits.map((kit) => (
@@ -27,6 +27,12 @@ export default async function KitsPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-6">
+        <Link href="/products" className="text-sm text-blue-600 hover:underline">
+          ← Volver a Productos
+        </Link>
       </div>
 
       {kits.length === 0 && (

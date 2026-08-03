@@ -13,7 +13,7 @@ export default async function Page() {
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         <Link
-          href="/dashboard/customers"
+          href="/dashboard/customers/create"
           className="flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-500"
         >
           <span>Crear cliente</span>

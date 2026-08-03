@@ -17,6 +17,9 @@ export default function CustomerForm({
 
   return (
     <form action={formAction}>
+      <div className="flex w-full items-center justify-between">
+        <h1 className="text-2xl">Clientes</h1>
+      </div>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="mb-4">
