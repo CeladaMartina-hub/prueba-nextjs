@@ -337,14 +337,15 @@ export async function fetchProductsForKit() {
         id: string;
         name: string;
         cost: number | null;
+        price: number | null;
         stock: number;
         portion_size: number | null;
         portion_unit: string | null;
       }[]
     >`
-      SELECT id, name, cost, stock, portion_size, portion_unit
+      SELECT id, name, cost, price, stock, portion_size, portion_unit
       FROM products
-      WHERE cost IS NOT NULL AND portion_size IS NOT NULL
+      WHERE price IS NOT NULL AND portion_size IS NOT NULL
       ORDER BY name ASC
     `;
     return products;

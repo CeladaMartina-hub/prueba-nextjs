@@ -420,17 +420,17 @@ export async function deleteCategory(id: string) {
 
 const SaleItemSchema = z.object({
   item_id: z.string().min(1),
-  item_type: z.enum(['product', 'kit']),
+  item_type: z.enum(["product", "kit"]),
   item_name: z.string().min(1),
   quantity: z.coerce.number().int().gt(0),
   unit_price: z.coerce.number().gt(0),
 });
 
 const SaleSchema = z.object({
-  customer_type: z.enum(['registered', 'counter']),
+  customer_type: z.enum(["registered", "counter"]),
   customer_id: z.string().optional(),
   customer_name: z.string().optional(),
-  items: z.array(SaleItemSchema).min(1, 'Agregá al menos un producto o kit.'),
+  items: z.array(SaleItemSchema).min(1, "Agregá al menos un producto o kit."),
 });
 
 export type SaleState = {
@@ -438,16 +438,16 @@ export type SaleState = {
 };
 
 export async function createSale(prevState: SaleState, formData: FormData) {
-  const customer_type = formData.get('customer_type') as string;
-  const customer_id = formData.get('customer_id') as string;
-  const customer_name = formData.get('customer_name') as string;
-  const itemsRaw = formData.get('items') as string;
+  const customer_type = formData.get("customer_type") as string;
+  const customer_id = formData.get("customer_id") as string;
+  const customer_name = formData.get("customer_name") as string;
+  const itemsRaw = formData.get("items") as string;
 
   let items;
   try {
     items = JSON.parse(itemsRaw);
   } catch {
-    return { message: 'Error al leer los productos de la venta.' };
+    return { message: "Error al leer los productos de la venta." };
   }
 
   const validatedFields = SaleSchema.safeParse({
@@ -458,18 +458,25 @@ export async function createSale(prevState: SaleState, formData: FormData) {
   });
 
   if (!validatedFields.success) {
-    return { message: 'Faltan datos. Revisá el cliente y los productos agregados.' };
+    return {
+      message: "Faltan datos. Revisá el cliente y los productos agregados.",
+    };
   }
 
   const data = validatedFields.data;
-  const finalCustomerId = data.customer_type === 'registered' ? (data.customer_id ?? null) : null;
-  const finalCustomerName = data.customer_type === 'counter' ? (data.customer_name || null) : null;
-  const total = data.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+  const finalCustomerId =
+    data.customer_type === "registered" ? (data.customer_id ?? null) : null;
+  const finalCustomerName =
+    data.customer_type === "counter" ? data.customer_name || null : null;
+  const total = data.items.reduce(
+    (sum, item) => sum + item.quantity * item.unit_price,
+    0,
+  );
 
   try {
     // Verificamos stock disponible antes de confirmar
     for (const item of data.items) {
-      const table = item.item_type === 'kit' ? 'kits' : 'products';
+      const table = item.item_type === "kit" ? "kits" : "products";
       const stockCheck = await sql`
         SELECT stock FROM ${sql(table)} WHERE id = ${item.item_id}
       `;
@@ -493,8 +500,8 @@ export async function createSale(prevState: SaleState, formData: FormData) {
           INSERT INTO sale_items (sale_id, product_id, kit_id, item_type, item_name, quantity, unit_price)
           VALUES (
             ${sale.id},
-            ${item.item_type === 'product' ? item.item_id : null},
-            ${item.item_type === 'kit' ? item.item_id : null},
+            ${item.item_type === "product" ? item.item_id : null},
+            ${item.item_type === "kit" ? item.item_id : null},
             ${item.item_type},
             ${item.item_name},
             ${item.quantity},
@@ -502,21 +509,21 @@ export async function createSale(prevState: SaleState, formData: FormData) {
           )
         `;
 
-        const table = item.item_type === 'kit' ? 'kits' : 'products';
+        const table = item.item_type === "kit" ? "kits" : "products";
         await sql`
           UPDATE ${sql(table)} SET stock = stock - ${item.quantity} WHERE id = ${item.item_id}
         `;
       }
     });
   } catch (error) {
-    console.error('Error creando venta:', error);
-    return { message: 'Database Error: No se pudo registrar la venta.' };
+    console.error("Error creando venta:", error);
+    return { message: "Database Error: No se pudo registrar la venta." };
   }
 
-  revalidatePath('/dashboard/sales');
-  revalidatePath('/dashboard/products');
-  revalidatePath('/dashboard/kits');
-  redirect('/dashboard/sales');
+  revalidatePath("/dashboard/sales");
+  revalidatePath("/dashboard/products");
+  revalidatePath("/dashboard/kits");
+  redirect("/dashboard/sales");
 }
 
 //comprado
@@ -596,13 +603,6 @@ export type KitState = {
   message?: string | null;
 };
 
-function convertUnits(value: number, from: string, to: string) {
-  if (from === to) return value;
-  if (from === "kg" && to === "g") return value * 1000;
-  if (from === "g" && to === "kg") return value / 1000;
-  return value;
-}
-
 const KitSchemaExtended = KitSchema.extend({
   build_quantity: z.coerce
     .number()
@@ -654,20 +654,14 @@ export async function createKit(prevState: KitState, formData: FormData) {
   const deductions: { product_id: string; units: number }[] = [];
   for (const item of kitItems) {
     const productData = await sql`
-      SELECT stock, portion_size, portion_unit FROM products WHERE id = ${item.product_id}
-    `;
+    SELECT stock FROM products WHERE id = ${item.product_id}
+  `;
     const product = productData[0];
     if (!product) {
       return { message: `No se encontró el producto "${item.product_name}".` };
     }
 
-    const qtyInPortionUnit = convertUnits(
-      item.quantity,
-      item.unit,
-      product.portion_unit,
-    );
-    const unitsNeededPerKit = qtyInPortionUnit / product.portion_size;
-    const totalUnitsNeeded = Math.round(unitsNeededPerKit * build_quantity);
+    const totalUnitsNeeded = item.quantity * build_quantity;
 
     if (product.stock < totalUnitsNeeded) {
       return {
@@ -722,23 +716,14 @@ export async function deleteKit(id: string) {
   try {
     await sql.begin(async (sql) => {
       const items = await sql`
-        SELECT product_id, quantity, unit FROM kit_items WHERE kit_id = ${id}
+        SELECT product_id, quantity FROM kit_items WHERE kit_id = ${id}
       `;
 
       const kitData = await sql`SELECT stock FROM kits WHERE id = ${id}`;
       const kitStock = kitData[0]?.stock ?? 0;
 
       for (const item of items) {
-        const productData = await sql`
-          SELECT portion_size, portion_unit FROM products WHERE id = ${item.product_id}
-        `;
-        const product = productData[0];
-        if (!product) continue;
-
-        const qtyInPortionUnit = convertUnits(Number(item.quantity), item.unit, product.portion_unit);
-        const unitsPerKit = qtyInPortionUnit / product.portion_size;
-        const totalUnitsToRestore = Math.round(unitsPerKit * kitStock);
-
+        const totalUnitsToRestore = Number(item.quantity) * kitStock;
         await sql`
           UPDATE products SET stock = stock + ${totalUnitsToRestore} WHERE id = ${item.product_id}
         `;
