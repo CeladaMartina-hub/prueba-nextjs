@@ -7,7 +7,7 @@ export default function CategoriesTable({ categories }: { categories: Category[]
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+       <div className="overflow-x-auto rounded-lg bg-gray-50 p-2 md:pt-0">
           <table className="min-w-full text-gray-900">
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>

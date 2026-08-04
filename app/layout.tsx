@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import Header from "./ui/header";
 import Footer from "./ui/Footer";
 import WhatsappFloat from "@/app/ui/whatsapp-float";
+import PublicChrome from "./ui/public-chrome";
 
 //%s reemplace el título de la página, si no hay título, se mostrará el valor por defecto
 export const metadata: Metadata = {
@@ -25,8 +26,7 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <Header />
         {children}
-        <Footer />
-        <WhatsappFloat />
+        <PublicChrome />
       </body>
     </html>
   );

@@ -190,7 +190,7 @@ export default function KitBuilder({
 
         {lines.length > 0 && (
           <div className="mb-4 rounded-md border">
-            <table className="min-w-full text-sm">
+               <table className="min-w-full text-gray-900">
               <thead>
                 <tr className="border-b bg-gray-100 text-left">
                   <th className="px-3 py-2">Producto</th>
