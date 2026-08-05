@@ -60,6 +60,7 @@ export async function fetchCategories() {
   }
 }
 
+//products
 export async function fetchProducts() {
   try {
     const products = await sql<(Product & { category_name: string })[]>`
@@ -127,6 +128,37 @@ WHERE products.id = ${id}
     throw new Error("Failed to fetch product.");
   }
 }
+
+export async function fetchFilteredProducts(query: string, currentPage: number) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const products = await sql<Product[]>`
+      SELECT * FROM products
+      WHERE name ILIKE ${`%${query}%`} OR description ILIKE ${`%${query}%`}
+      ORDER BY created_at DESC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+    return products;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch products.');
+  }
+}
+
+export async function fetchProductsPages(query: string) {
+  try {
+    const data = await sql`
+      SELECT COUNT(*) FROM products
+      WHERE name ILIKE ${`%${query}%`} OR description ILIKE ${`%${query}%`}
+    `;
+    return Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of products.');
+  }
+}
+
 
 //categorias
 export async function fetchCategoryById(id: string) {
@@ -348,6 +380,41 @@ export async function fetchPurchasesForSelect() {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch purchases.");
+  }
+}
+
+const ITEMS_PER_PAGE = 8;
+
+export async function fetchFilteredPurchases(
+  query: string,
+  currentPage: number,
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const purchases = await sql<Purchase[]>`
+      SELECT * FROM purchases
+      WHERE description ILIKE ${`%${query}%`} OR supplier ILIKE ${`%${query}%`}
+      ORDER BY purchase_date DESC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+    return purchases;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch purchases.");
+  }
+}
+
+export async function fetchPurchasesPages(query: string) {
+  try {
+    const data = await sql`
+      SELECT COUNT(*) FROM purchases
+      WHERE description ILIKE ${`%${query}%`} OR supplier ILIKE ${`%${query}%`}
+    `;
+    return Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch total number of purchases.");
   }
 }
 

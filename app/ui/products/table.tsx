@@ -3,19 +3,17 @@ import Link from "next/link";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { formatPrice } from "@/app/lib/utils";
 import { deleteProduct } from "@/app/lib/actions";
+import { fetchFilteredProducts } from '@/app/lib/data';
 
-export default function ProductsTable({
-  products,
+export default async function ProductsTable({
+  query,
+  currentPage,
 }: {
-  products: {
-    id: string;
-    name: string;
-    price: number;
-    image_url: string;
-    stock: number;
-    category_name: string;
-  }[];
+  query: string;
+  currentPage: number;
 }) {
+  const products = await fetchFilteredProducts(query, currentPage);
+
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
@@ -59,7 +57,7 @@ export default function ProductsTable({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {product.category_name}
+                    {product.category_id}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatPrice(product.price)}

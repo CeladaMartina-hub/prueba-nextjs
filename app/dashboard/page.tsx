@@ -8,13 +8,13 @@ import {
   PowerIcon,
   GiftIcon,
 } from "@heroicons/react/24/outline";
-import {
-  fetchCustomers,
-  fetchProducts,
-  fetchCategories,
-  fetchSales,
-} from "@/app/lib/data";
-import { signOut } from "@/auth";
+// import {
+//   fetchCustomers,
+//   fetchProducts,
+//   fetchCategories,
+//   fetchSales,
+// } from "@/app/lib/data";
+// import { signOut } from "@/auth";
 
 const cards = [
   {
