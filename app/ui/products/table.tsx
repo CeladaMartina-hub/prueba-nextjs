@@ -57,7 +57,7 @@ export default async function ProductsTable({
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {product.category_id}
+                    {product.category_name}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatPrice(product.price)}

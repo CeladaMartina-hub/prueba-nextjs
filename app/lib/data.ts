@@ -1,6 +1,5 @@
 import postgres from "postgres";
-import { Customer, Product, Purchase, Sale } from "./definitions";
-import { Category } from "./definitions";
+import { Customer, Product, Purchase, Sale, Category } from "./definitions";
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
@@ -129,20 +128,36 @@ WHERE products.id = ${id}
   }
 }
 
-export async function fetchFilteredProducts(query: string, currentPage: number) {
+export async function fetchFilteredProducts(
+  query: string,
+  currentPage: number,
+) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const products = await sql<Product[]>`
-      SELECT * FROM products
-      WHERE name ILIKE ${`%${query}%`} OR description ILIKE ${`%${query}%`}
-      ORDER BY created_at DESC
+    const products = await sql<(Product & { category_name: string })[]>`
+      select products.id,
+  products.name,
+  products.description,
+  products.price,
+  products.image_url,
+  products.stock,
+  products.category_id,
+  products.cost,
+  products.purchase_id,
+  products.portion_size,
+  products.portion_unit,
+  categories.name AS category_name
+FROM products
+JOIN categories ON products.category_id = categories.id
+      WHERE products.name ILIKE ${`%${query}%`} OR products.description ILIKE ${`%${query}%`}
+      ORDER BY products.created_at DESC
       LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
     return products;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch products.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch products.");
   }
 }
 
@@ -154,11 +169,10 @@ export async function fetchProductsPages(query: string) {
     `;
     return Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of products.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch total number of products.");
   }
 }
-
 
 //categorias
 export async function fetchCategoryById(id: string) {
@@ -339,7 +353,10 @@ export async function fetchProductByCategoryId(categoryId: string) {
 
 const PUBLIC_ITEMS_PER_PAGE = 8;
 
-export async function fetchPaginatedProducts(categoryId: string | undefined, currentPage: number) {
+export async function fetchPaginatedProducts(
+  categoryId: string | undefined,
+  currentPage: number,
+) {
   const offset = (currentPage - 1) * PUBLIC_ITEMS_PER_PAGE;
 
   try {
@@ -361,8 +378,8 @@ export async function fetchPaginatedProducts(categoryId: string | undefined, cur
         `;
     return products;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch products.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch products.");
   }
 }
 
@@ -373,10 +390,10 @@ export async function fetchPublicProductsPages(categoryId: string | undefined) {
       : await sql`SELECT COUNT(*) FROM products`;
     return Math.ceil(Number(data[0].count) / PUBLIC_ITEMS_PER_PAGE);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of products.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch total number of products.");
   }
-} 
+}
 
 //comprado
 export async function fetchPurchases() {
