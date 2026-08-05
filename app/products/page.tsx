@@ -1,22 +1,25 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  fetchAllProducts,
-  fetchProductByCategoryId,
+  fetchPaginatedProducts,
+  fetchPublicProductsPages,
   fetchCategories,
   fetchPublicKits,
 } from "@/app/lib/data";
 import { formatPrice } from "@/app/lib/utils";
+import Pagination from "@/app/ui/pagination";
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; page?: string }>;
 }) {
-  const { category } = await searchParams;
+  const { category, page } = await searchParams;
+  const currentPage = Number(page) || 1;
 
-  const [products, categories, kits] = await Promise.all([
-    category ? fetchProductByCategoryId(category) : fetchAllProducts(),
+  const [products, totalPages, categories, kits] = await Promise.all([
+    fetchPaginatedProducts(category, currentPage),
+    fetchPublicProductsPages(category),
     fetchCategories(),
     fetchPublicKits(),
   ]);
@@ -80,6 +83,7 @@ export default async function ProductsPage({
         ))}
 
         {!category &&
+          currentPage === 1 &&
           kits.map((kit) => (
             <Link
               key={kit.id}
@@ -97,12 +101,18 @@ export default async function ProductsPage({
               </div>
             </Link>
           ))}
-      </div>     
+      </div>
 
       {products.length === 0 && (!category ? kits.length === 0 : true) && (
         <p className="mt-8 text-center text-gray-500">
           Todavía no hay productos en esta categoría.
         </p>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex w-full justify-center">
+          <Pagination totalPages={totalPages} />
+        </div>
       )}
     </div>
   );

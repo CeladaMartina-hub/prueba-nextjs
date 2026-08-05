@@ -336,6 +336,48 @@ export async function fetchProductByCategoryId(categoryId: string) {
     throw new Error("Failed to fetch products by category.");
   }
 }
+
+const PUBLIC_ITEMS_PER_PAGE = 8;
+
+export async function fetchPaginatedProducts(categoryId: string | undefined, currentPage: number) {
+  const offset = (currentPage - 1) * PUBLIC_ITEMS_PER_PAGE;
+
+  try {
+    const products = categoryId
+      ? await sql<(Product & { category_name: string })[]>`
+          SELECT products.id, products.name, products.price, products.image_url, categories.name AS category_name
+          FROM products
+          JOIN categories ON products.category_id = categories.id
+          WHERE products.category_id = ${categoryId}
+          ORDER BY products.created_at DESC
+          LIMIT ${PUBLIC_ITEMS_PER_PAGE} OFFSET ${offset}
+        `
+      : await sql<(Product & { category_name: string })[]>`
+          SELECT products.id, products.name, products.price, products.image_url, categories.name AS category_name
+          FROM products
+          JOIN categories ON products.category_id = categories.id
+          ORDER BY products.created_at DESC
+          LIMIT ${PUBLIC_ITEMS_PER_PAGE} OFFSET ${offset}
+        `;
+    return products;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch products.');
+  }
+}
+
+export async function fetchPublicProductsPages(categoryId: string | undefined) {
+  try {
+    const data = categoryId
+      ? await sql`SELECT COUNT(*) FROM products WHERE category_id = ${categoryId}`
+      : await sql`SELECT COUNT(*) FROM products`;
+    return Math.ceil(Number(data[0].count) / PUBLIC_ITEMS_PER_PAGE);
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of products.');
+  }
+} 
+
 //comprado
 export async function fetchPurchases() {
   try {
