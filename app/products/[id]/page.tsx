@@ -14,7 +14,7 @@ export default async function ProductDetailPage(props: {
     notFound();
   }
 
-  const whatsappNumber = "5491137801717";
+  const whatsappNumber = "5491161592509";
   const message = `Hola, me interesa el producto "${product.name}"`;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 

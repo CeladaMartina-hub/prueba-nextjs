@@ -9,10 +9,10 @@ import PublicChrome from "./ui/public-chrome";
 //%s reemplace el título de la página, si no hay título, se mostrará el valor por defecto
 export const metadata: Metadata = {
   title: {
-    template: "%s | Acme Dashboard",
-    default: "Acme Dashboard",
+    template: "%s | Ecobocado.LL",
+    default: "Ecobocado.LL",
   },
-  description: "The official Next.js Learn Dashboard built with App Router.",
+  description: "Descubre nuestros productos ecológicos y sostenibles.",
   metadataBase: new URL("https://next-learn-dashboard.vercel.sh"),
 };
 

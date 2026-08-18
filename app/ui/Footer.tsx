@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-const INSTAGRAM_URL = "https://instagram.com/TU_USUARIO"; // reemplazar
-const WHATSAPP_URL = "https://wa.me/5491137801717";
+const INSTAGRAM_URL = "https://instagram.com/ecobocado.ll"; 
+const WHATSAPP_URL = "https://wa.me/5491161592509";
 
 export default function Footer() {
   return (
@@ -9,7 +9,7 @@ export default function Footer() {
       
       <div className="mx-auto grid max-w-screen-xl gap-10 px-4 py-12 md:grid-cols-4">
         <div>
-          <h3 className="mb-4 text-lg font-semibold">Tu Dietética</h3>
+          <h3 className="mb-4 text-lg font-semibold">Ecobocado </h3>
 
           <p className="text-sm text-gray-600">
             Productos saludables, suplementos, alimentos naturales y bebidas.
@@ -80,7 +80,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t py-4 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Tu Dietética. Todos los derechos
+        © {new Date().getFullYear()} Ecobocado.LL. Todos los derechos
         reservados.
       </div>
     </footer>

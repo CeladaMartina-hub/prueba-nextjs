@@ -13,7 +13,7 @@ export default async function KitDetailPage(props: {
     notFound();
   }
 
-  const whatsappNumber = "5491137801717";
+  const whatsappNumber = "5491161592509";
   const message = `Hola, me interesa el kit "${kit.name}"`;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 

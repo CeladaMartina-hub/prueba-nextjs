@@ -20,7 +20,7 @@ export default async function Header() {
   return (
     <header className="relative z-50 flex items-center justify-between border-b px-4 py-4 md:px-8">
       <Link href="/" className="text-lg font-semibold">
-        Mi Tienda
+        Ecobocado.LL
       </Link>
 
       <nav className="hidden items-center gap-6 md:flex">
