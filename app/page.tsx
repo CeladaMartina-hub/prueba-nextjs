@@ -10,7 +10,14 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
-import CategoryCarousel from "./ui/category-carousel";
+import HeroCarousel from "@/app/ui/hero-carousel";
+import CategoryCarousel from "@/app/ui/category-carousel";
+
+const heroSlides = [
+  { image: "/hero/slide-1.webp" },
+  { image: "/hero/slide-2.webp" },
+  { image: "/hero/slide-3.webp" },
+];
 
 export default async function HomePage() {
   const categories = await fetchCategoriesWithImage();
@@ -41,28 +48,17 @@ export default async function HomePage() {
 
   return (
     <div>
-      <br/>
+      <br />
+      {/* Carrusel hero (reemplaza la franja verde) */}
+      <HeroCarousel slides={heroSlides} />
+      
       {/* Categorías */}
-      <section className="mx-auto max-w-screen-xl px-4 pb-16">
-        <h2 className="mb-6 text-center text-2xl font-semibold">Categorías</h2>
-        <CategoryCarousel categories={categories} kits={kits} />
-      </section>
-
-      {/* Hero */}
-      <section className="relative flex h-[380px] items-center justify-center bg-gradient-to-br from-green-700 to-green-500 px-4 text-center text-white">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wide opacity-90">
-            Nuestras ofertas
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold md:text-4xl">
-            Productos dietéticos y bebidas saludables
-          </h1>
-          <Link
-            href="/products"
-            className="mt-6 inline-block rounded-full bg-white px-6 py-3 text-sm font-medium text-green-700 hover:bg-gray-100"
-          >
-            Ver catálogo
-          </Link>
+      <section className="bg-gradient-to-br from-green-300 to-green-500 px-4 py-16 text-white">
+        <div className="mx-auto max-w-screen-xl">
+          <h2 className="mb-6 text-center text-2xl font-semibold">
+            Categorías
+          </h2>
+          <CategoryCarousel categories={categories} kits={kits} />
         </div>
       </section>
 
