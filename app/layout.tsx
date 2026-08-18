@@ -2,8 +2,6 @@ import "@/app/ui/global.css";
 import { inter } from "@/app/ui/fonts";
 import { Metadata } from "next";
 import Header from "./ui/header";
-import Footer from "./ui/Footer";
-import WhatsappFloat from "@/app/ui/whatsapp-float";
 import PublicChrome from "./ui/public-chrome";
 
 //%s reemplace el título de la página, si no hay título, se mostrará el valor por defecto
