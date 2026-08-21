@@ -34,7 +34,7 @@ export default function HeroCarousel({ slides }: { slides: Slide[] }) {
 
   return (
     <section
-      className="relative h-[420px] w-full overflow-hidden md:h-[520px]"
+      className="relative w-full bg-[#e9f5e8] aspect-[16/9] sm:aspect-[16/7] lg:aspect-[16/6]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -50,7 +50,7 @@ export default function HeroCarousel({ slides }: { slides: Slide[] }) {
             alt={slide.title ?? `Slide ${index + 1}`}
             fill
             priority={index === 0}
-            className="object-cover"
+            className="object-contain "
           />
           {(slide.title || slide.subtitle) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 px-4 text-center text-white">

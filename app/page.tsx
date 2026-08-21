@@ -14,9 +14,9 @@ import HeroCarousel from "@/app/ui/hero-carousel";
 import CategoryCarousel from "@/app/ui/category-carousel";
 
 const heroSlides = [
-  { image: "/hero/slide-1.webp" },
-  { image: "/hero/slide-2.webp" },
-  { image: "/hero/slide-3.webp" },
+  { image: "/hero/slide-1.png" },
+  { image: "/hero/slide-2.png" },
+  { image: "/hero/slide-3.png" },
 ];
 
 export default async function HomePage() {
@@ -48,8 +48,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <br />
-      {/* Carrusel hero (reemplaza la franja verde) */}
+      {/* Carrusel hero */}
       <HeroCarousel slides={heroSlides} />
       
       {/* Categorías */}
