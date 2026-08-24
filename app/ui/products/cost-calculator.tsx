@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type PurchaseOption = {
   id: string;
@@ -10,35 +10,53 @@ type PurchaseOption = {
   total_cost: number;
 };
 
+type PackagingOption = {
+  id: string;
+  description: string;
+  quantity: number;
+  total_cost: number;
+};
+
 export default function CostCalculator({
   purchases,
+  packagingOptions = [],
   defaultPurchaseId,
   defaultPortionSize,
   defaultPortionUnit,
   defaultCost,
   defaultPrice,
+  defaultPackagingPurchaseId,
 }: {
   purchases: PurchaseOption[];
+  packagingOptions?: PackagingOption[];
   defaultPurchaseId?: string;
   defaultPortionSize?: number;
   defaultPortionUnit?: string;
   defaultCost?: number;
   defaultPrice?: number;
+  defaultPackagingPurchaseId?: string;
 }) {
   const [purchaseId, setPurchaseId] = useState(defaultPurchaseId ?? "");
-  const [portionSize, setPortionSize] = useState(
-    defaultPortionSize?.toString() ?? "",
-  );
+  const [portionSize, setPortionSize] = useState(defaultPortionSize?.toString() ?? "");
   const [portionUnit, setPortionUnit] = useState(defaultPortionUnit ?? "g");
-  const [manualCost, setManualCost] = useState(defaultCost?.toString() ?? "");
+
+  // Solo guardamos costo manual si NO venimos de una compra asociada
+  const [manualCost, setManualCost] = useState(
+    !defaultPurchaseId && defaultCost ? defaultCost.toString() : ""
+  );
+
   const [price, setPrice] = useState(defaultPrice?.toString() ?? "");
   const [priceTouched, setPriceTouched] = useState(false);
 
+  // Estados de Packaging
+  const [hasPackaging, setHasPackaging] = useState(Boolean(defaultPackagingPurchaseId));
+  const [packagingId, setPackagingId] = useState(defaultPackagingPurchaseId ?? "");
+
+  // 1. Cálculo del ingrediente
   const selectedPurchase = purchases.find((p) => p.id === purchaseId);
 
-  const calculatedCost = useMemo(() => {
+  const calculatedIngredientCost = useMemo(() => {
     if (!selectedPurchase || !portionSize) return null;
-
     const size = Number(portionSize);
     if (size <= 0) return null;
 
@@ -53,13 +71,24 @@ export default function CostCalculator({
     return Math.round(costPerUnit * size);
   }, [selectedPurchase, portionSize, portionUnit]);
 
-  const finalCost =
-    calculatedCost !== null && !manualCost
-      ? calculatedCost
-      : Number(manualCost) || 0;
+  // Si hay compra asociada, la prioridad SIEMPRE es el cálculo automático
+  const ingredientCost = purchaseId
+    ? (calculatedIngredientCost ?? 0)
+    : (Number(manualCost) || 0);
+
+  // 2. Cálculo del envase / packaging
+  const selectedPackaging = packagingOptions.find((p) => p.id === packagingId);
+  const packagingCost = useMemo(() => {
+    if (!hasPackaging || !selectedPackaging || selectedPackaging.quantity <= 0) return 0;
+    return Math.round(selectedPackaging.total_cost / selectedPackaging.quantity);
+  }, [hasPackaging, selectedPackaging]);
+
+  // 3. COSTO TOTAL (Ingrediente + Envase)
+  const finalCost = ingredientCost + packagingCost;
+
+  // 4. Precio sugerido y ganancias basadas en COSTO TOTAL
   const suggestedPrice = finalCost > 0 ? Math.round(finalCost * 1.3) : 0;
   const finalPrice = Number(price) || 0;
-
   const profit = finalPrice - finalCost;
   const marginPercent = finalCost > 0 ? (profit / finalCost) * 100 : null;
   const displayedPrice = !priceTouched && suggestedPrice > 0 ? suggestedPrice.toString() : price;
@@ -70,20 +99,23 @@ export default function CostCalculator({
         Calculadora de costo y ganancia
       </p>
 
+      {/* 1. Selección de Ingrediente */}
       <div className="mb-3">
         <label className="mb-1 block text-xs font-medium text-gray-600">
           ¿De qué compra sale este producto?
         </label>
         <select
           value={purchaseId}
-          onChange={(e) => setPurchaseId(e.target.value)}
+          onChange={(e) => {
+            setPurchaseId(e.target.value);
+            if (!e.target.value) setManualCost("");
+          }}
           className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
         >
           <option value="">No asociar / cargar costo manual</option>
           {purchases.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.description} — {p.quantity}
-              {p.unit} por ${p.total_cost.toLocaleString("es-AR")}
+              {p.description} — {p.quantity}{p.unit} por ${p.total_cost.toLocaleString("es-AR")}
             </option>
           ))}
         </select>
@@ -121,24 +153,64 @@ export default function CostCalculator({
         </div>
       )}
 
+      {/* 2. Sección de Packaging / Envase */}
+      <div className="mb-4 mt-2 rounded-md border border-blue-200 bg-white p-3">
+        <label className="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={hasPackaging}
+            onChange={(e) => {
+              setHasPackaging(e.target.checked);
+              if (!e.target.checked) setPackagingId("");
+            }}
+            className="rounded border-gray-300 text-blue-600"
+          />
+          ¿Viene en bolsa / envase?
+        </label>
+
+        {hasPackaging && (
+          <div className="mt-2">
+            <select
+              value={packagingId}
+              onChange={(e) => setPackagingId(e.target.value)}
+              className="block w-full rounded-md border border-gray-200 py-1.5 px-2 text-xs"
+            >
+              <option value="">Elegí un envase</option>
+              {packagingOptions.map((pkg) => {
+                const costPerUnit = pkg.quantity > 0 ? Math.round(pkg.total_cost / pkg.quantity) : 0;
+                return (
+                  <option key={pkg.id} value={pkg.id}>
+                    {pkg.description} — ${costPerUnit.toLocaleString("es-AR")}/unidad
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Costo y Precio de Venta */}
       <div className="mb-3 grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-600">
-            Costo {calculatedCost !== null && !manualCost ? "(calculado)" : ""}
+            {purchaseId
+              ? `Costo total ${hasPackaging && packagingCost > 0 ? `($${ingredientCost} + $${packagingCost} envase)` : ""}`
+              : "Costo ingrediente (manual)"}
           </label>
           <input
             type="number"
-            name="cost"
             step="1"
-            value={
-              calculatedCost !== null && !manualCost
-                ? calculatedCost
-                : manualCost
-            }
-            onChange={(e) => setManualCost(e.target.value)}
-            className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
+            value={purchaseId ? finalCost : manualCost}
+            onChange={(e) => {
+              if (!purchaseId) setManualCost(e.target.value);
+            }}
+            readOnly={Boolean(purchaseId)}
+            className={`block w-full rounded-md border border-gray-200 py-2 px-3 text-sm font-semibold ${
+              purchaseId ? "bg-gray-100 text-gray-700" : "bg-white text-gray-900"
+            }`}
           />
         </div>
+
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-600">
             Precio de venta
@@ -153,11 +225,11 @@ export default function CostCalculator({
             }}
             className="block w-full rounded-md border border-gray-200 py-2 px-3 text-sm"
           />
-          {/* Espejo hidden para que llegue con el name="price" que espera el form */}
           <input type="hidden" name="price" value={displayedPrice} />
         </div>
       </div>
 
+      {/* 4. Resumen de Ganancia */}
       {finalCost > 0 && finalPrice > 0 && (
         <div
           className={`rounded-md p-3 text-sm ${
@@ -172,18 +244,20 @@ export default function CostCalculator({
             <span>
               {" "}
               ({marginPercent >= 0 ? "+" : ""}
-              {marginPercent.toFixed(0)}% sobre el costo)
+              {marginPercent.toFixed(0)}% sobre costo total)
             </span>
           )}
-          {profit <= 0 && (
-            <span> — ¡Estás vendiendo a pérdida o sin margen!</span>
-          )}
+          {profit <= 0 && <span> — ¡Estás vendiendo a pérdida!</span>}
         </div>
       )}
 
+      {/* Inputs Ocultos para el Formulario */}
+      <input type="hidden" name="cost" value={finalCost} />
       <input type="hidden" name="purchase_id" value={purchaseId} />
       <input type="hidden" name="portion_size" value={portionSize} />
       <input type="hidden" name="portion_unit" value={portionUnit} />
+      <input type="hidden" name="packaging_purchase_id" value={hasPackaging ? packagingId : ""} />
+      <input type="hidden" name="packaging_cost" value={packagingCost} />
     </div>
   );
 }

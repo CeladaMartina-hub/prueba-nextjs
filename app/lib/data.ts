@@ -477,6 +477,24 @@ export async function fetchPurchasesPages(query: string) {
   }
 }
 
+//embolsados disponibles
+export async function fetchPackagingPurchases() {
+  try {
+    const purchases = await sql<
+      { id: string; description: string; quantity: number; total_cost: number }[]
+    >`
+      SELECT id, description, quantity, total_cost
+      FROM purchases
+      WHERE is_packaging = true
+      ORDER BY purchase_date DESC
+    `;
+    return purchases;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch packaging purchases.');
+  }
+}
+
 //kits
 export async function fetchProductsForKit() {
   try {

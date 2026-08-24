@@ -109,6 +109,8 @@ export async function updateProduct(
   const purchase_id = formData.get("purchase_id") as string;
   const portion_size = formData.get("portion_size");
   const portion_unit = formData.get("portion_unit") as string;
+  const packaging_purchase_id = formData.get("packaging_purchase_id") as string;
+  const packaging_cost = formData.get("packaging_cost");
 
   const validatedFields = ProductSchema.safeParse({
     name: formData.get("name"),
@@ -144,13 +146,20 @@ export async function updateProduct(
 
   try {
     await sql`
-     UPDATE products
-  SET name = ${name}, description = ${description ?? null}, price = ${price},
-      image_url = ${imageUrl}, category_id = ${category_id}, stock = ${stock},
-      cost = ${cost ? Number(cost) : null}, purchase_id = ${purchase_id || null},
-      portion_size = ${portion_size ? Number(portion_size) : null},
-      portion_unit = ${portion_unit || null}
-  WHERE id = ${id}
+      UPDATE products
+      SET name = ${name}, 
+          description = ${description ?? null}, 
+          price = ${price},
+          image_url = ${imageUrl}, 
+          category_id = ${category_id}, 
+          stock = ${stock},
+          cost = ${cost ? Number(cost) : null}, 
+          purchase_id = ${purchase_id || null},
+          portion_size = ${portion_size ? Number(portion_size) : null},
+          portion_unit = ${portion_unit || null},
+          packaging_purchase_id = ${packaging_purchase_id || null},
+          packaging_cost = ${packaging_cost ? Number(packaging_cost) : null}
+      WHERE id = ${id}
     `;
   } catch (error) {
     return { message: "Database Error: No se pudo actualizar el producto." };
@@ -544,6 +553,7 @@ const PurchaseWithProductSchema = z.object({
   quantity: z.coerce.number().gt(0, "La cantidad debe ser mayor a 0."),
   unit: z.enum(["kg", "g", "unit"]),
   total_cost: z.coerce.number().gt(0, "El costo debe ser mayor a 0."),
+  is_packaging: z.string().optional(),
   is_product: z.string().optional(),
   product_name: z.string().optional(),
   product_description: z.string().optional(),
@@ -553,6 +563,8 @@ const PurchaseWithProductSchema = z.object({
   product_portion_unit: z.string().optional(),
   product_cost: z.string().optional(),
   product_price: z.string().optional(),
+  product_packaging_id: z.string().optional(),
+  product_packaging_cost: z.string().optional(),
 });
 
 export async function createPurchase(
@@ -560,24 +572,34 @@ export async function createPurchase(
   formData: FormData,
 ) {
   const validatedFields = PurchaseWithProductSchema.safeParse({
-    purchase_date: formData.get("purchase_date"),
-    supplier: formData.get("supplier"),
-    description: formData.get("description"),
-    quantity: formData.get("quantity"),
-    unit: formData.get("unit"),
-    total_cost: formData.get("total_cost"),
-    is_product: formData.get("is_product"),
-    product_name: formData.get("product_name"),
-    product_description: formData.get("product_description"),
-    product_stock: formData.get("product_stock"),
-    product_category_id: formData.get("product_category_id"),
-    product_portion_size: formData.get("product_portion_size"),
-    product_portion_unit: formData.get("product_portion_unit"),
-    product_cost: formData.get("product_cost"),
-    product_price: formData.get("product_price"),
+  purchase_date: formData.get("purchase_date"),
+  supplier: formData.get("supplier") ?? undefined,
+  description: formData.get("description"),
+  quantity: formData.get("quantity"),
+  unit: formData.get("unit"),
+  total_cost: formData.get("total_cost"),
+
+  is_packaging: formData.get("is_packaging") ?? undefined,
+  is_product: formData.get("is_product") ?? undefined,
+
+  product_name: formData.get("product_name") ?? undefined,
+  product_description: formData.get("product_description") ?? undefined,
+  product_stock: formData.get("product_stock") ?? undefined,
+  product_category_id: formData.get("product_category_id") ?? undefined,
+  product_portion_size: formData.get("product_portion_size") ?? undefined,
+  product_portion_unit: formData.get("product_portion_unit") ?? undefined,
+  product_cost: formData.get("product_cost") ?? undefined,
+  product_price: formData.get("product_price") ?? undefined,
+  product_packaging_id: formData.get("product_packaging_id") ?? undefined,
+  product_packaging_cost: formData.get("product_packaging_cost") ?? undefined,
   });
 
   if (!validatedFields.success) {
+    console.error(
+      "Errores de validación:",
+      validatedFields.error.flatten().fieldErrors,
+    );
+
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Faltan campos. No se pudo registrar la compra.",
@@ -586,6 +608,7 @@ export async function createPurchase(
 
   const data = validatedFields.data;
   const createsProduct = data.is_product === "yes";
+  const isPackaging = data.is_packaging === "yes";
 
   // Validaciones extra si se va a crear un producto también
   if (createsProduct) {
@@ -616,15 +639,17 @@ export async function createPurchase(
   try {
     await sql.begin(async (sql) => {
       const [purchase] = await sql`
-        INSERT INTO purchases (purchase_date, supplier, description, quantity, unit, total_cost)
-        VALUES (${data.purchase_date}, ${data.supplier || null}, ${data.description}, ${data.quantity}, ${data.unit}, ${data.total_cost})
+        INSERT INTO purchases (purchase_date, supplier, description, quantity, unit, total_cost, is_packaging)
+        VALUES (${data.purchase_date}, ${data.supplier || null}, ${data.description}, ${data.quantity}, ${data.unit}, ${data.total_cost}, ${isPackaging})
         RETURNING id
       `;
 
       if (createsProduct) {
         await sql`
         INSERT INTO products (
-          name, description, price, image_url, category_id, stock, cost, purchase_id, portion_size, portion_unit)
+            name, description, price, image_url, category_id, stock, cost, purchase_id,
+            portion_size, portion_unit, packaging_purchase_id, packaging_cost
+          )
       VALUES (
     ${data.product_name ?? null},
     ${data.product_description || null},
@@ -635,7 +660,9 @@ export async function createPurchase(
     ${data.product_cost ? Number(data.product_cost) : null},
     ${purchase.id},
     ${data.product_portion_size ? Number(data.product_portion_size) : null},
-    ${data.product_portion_unit || null}
+    ${data.product_portion_unit || null},
+    ${data.product_packaging_id || null},
+    ${data.product_packaging_cost ? Number(data.product_packaging_cost) : null}
   )
 `;
       }

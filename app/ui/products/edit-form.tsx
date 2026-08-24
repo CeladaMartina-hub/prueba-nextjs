@@ -7,12 +7,20 @@ import { Category, Product, ProductState } from "@/app/lib/definitions";
 import { updateProduct } from "@/app/lib/actions";
 import CostCalculator from "@/app/ui/products/cost-calculator";
 
+type PackagingOption = {
+  id: string;
+  description: string;
+  quantity: number;
+  total_cost: number;
+};
+
 export default function EditForm({
   product,
   categories,
   purchases,
+  packagingOptions,
 }: {
-  product: Product;
+  product: Product & { packaging_purchase_id?: string | null; packaging_cost?: number | null };
   categories: Category[];
   purchases: {
     id: string;
@@ -21,6 +29,7 @@ export default function EditForm({
     unit: string;
     total_cost: number;
   }[];
+  packagingOptions: PackagingOption[];
 }) {
   const initialState: ProductState = { message: null, errors: {} };
   const updateProductWithId = updateProduct.bind(
@@ -29,6 +38,11 @@ export default function EditForm({
     product.image_url,
   );
   const [state, formAction] = useActionState(updateProductWithId, initialState);
+
+  // Restamos el costo de envase previo para mandarle solo el costo de ingrediente a la calculadora
+  const ingredientBaseCost = product.cost
+    ? product.cost - (product.packaging_cost ?? 0)
+    : undefined;
 
   return (
     <form action={formAction}>
@@ -50,10 +64,7 @@ export default function EditForm({
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="description"
-            className="mb-2 block text-sm font-medium"
-          >
+          <label htmlFor="description" className="mb-2 block text-sm font-medium">
             Descripción
           </label>
           <textarea
@@ -67,11 +78,13 @@ export default function EditForm({
 
         <CostCalculator
           purchases={purchases}
+          packagingOptions={packagingOptions}
           defaultPurchaseId={product.purchase_id ?? undefined}
           defaultPortionSize={product.portion_size ?? undefined}
           defaultPortionUnit={product.portion_unit ?? undefined}
-          defaultCost={product.cost ?? undefined}
+          defaultCost={ingredientBaseCost}
           defaultPrice={product.price}
+          defaultPackagingPurchaseId={product.packaging_purchase_id ?? undefined}
         />
 
         <div className="mb-4">
@@ -88,10 +101,7 @@ export default function EditForm({
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="category_id"
-            className="mb-2 block text-sm font-medium"
-          >
+          <label htmlFor="category_id" className="mb-2 block text-sm font-medium">
             Categoría
           </label>
           <select
