@@ -615,3 +615,26 @@ export async function fetchPublicKits() {
     throw new Error("Failed to fetch kits.");
   }
 }
+
+//exportar
+export async function fetchAllProductsForExport(query: string = '') {
+  try {
+    const data = await sql`
+      SELECT
+        products.name,
+        categories.name AS category_name,
+        products.price,
+        products.stock
+      FROM products
+      LEFT JOIN categories ON products.category_id = categories.id
+      WHERE
+        products.name ILIKE ${`%${query}%`} OR
+        categories.name ILIKE ${`%${query}%`}
+      ORDER BY products.name ASC
+    `;
+    return data; // <-- antes era data.rows
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('No se pudieron obtener los productos para exportar.');
+  }
+}
